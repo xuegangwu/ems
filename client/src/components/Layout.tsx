@@ -1,136 +1,112 @@
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  DashboardOutlined,
+  MonitorOutlined,
+  ToolOutlined,
+  ThunderboltOutlined,
+  ShopOutlined,
+  AppstoreOutlined,
+  BellOutlined,
+  AlertOutlined,
+  SettingOutlined,
+  BankOutlined,
+  PieChartOutlined,
+  ExperimentOutlined,
+  RobotOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { Layout, Menu, Avatar, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
+
+const { Header, Sider, Content } = Layout;
+
+const menuItems: MenuProps['items'] = [
+  { key: '/dashboard', icon: <DashboardOutlined />, label: '首页概览' },
+  { key: '/monitoring', icon: <MonitorOutlined />, label: '监控中心' },
+  { key: '/operation', icon: <ToolOutlined />, label: '运维管理' },
+  { key: '/workorders', icon: <SettingOutlined />, label: '工单管理' },
+  { key: '/electricity-trade', icon: <ThunderboltOutlined />, label: '电力交易' },
+  { key: '/station-trade', icon: <ShopOutlined />, label: '电站交易' },
+  { key: '/strategies', icon: <BankOutlined />, label: '储能策略' },
+  { key: '/economy', icon: <PieChartOutlined />, label: '经济分析' },
+  { key: '/multi-energy', icon: <ExperimentOutlined />, label: '多能互补' },
+  { key: '/carbon', icon: <BankOutlined />, label: '碳资产' },
+  { key: '/ai-diagnosis', icon: <RobotOutlined />, label: 'AI诊断' },
+  { key: '/stations', icon: <AppstoreOutlined />, label: '电站管理' },
+  { key: '/alerts', icon: <BellOutlined />, label: '告警管理' },
+  { key: '/alert-rules', icon: <AlertOutlined />, label: '告警规则' },
+];
 
 export default function LayoutComponent() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const menuItems = [
-    { key: '/lab', label: 'Lab 概览', icon: '🔬' },
-    { key: '/projects', label: '项目案例', icon: '🏢' },
-    { key: '/solutions', label: '解决方案', icon: '💡' },
-    { key: '/tech', label: '技术研发', icon: '⚙️' },
-    { key: '/tools', label: '工具箱', icon: '🔧' },
-    { key: '/about', label: '关于', icon: 'ℹ️' },
+  const userMenuItems: MenuProps['items'] = [
+    { key: 'profile', label: '个人中心' },
+    { key: 'settings', label: '设置' },
+    { type: 'divider' },
+    { key: 'logout', label: '退出登录' },
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
-      <div style={{
-        width: collapsed ? '80px' : '240px',
-        background: 'linear-gradient(180deg, #1A1A2E 0%, #2D2D44 100%)',
-        color: 'white',
-        transition: 'width 0.3s',
-        position: 'fixed',
-        height: '100vh',
-        overflow: 'hidden'
-      }}>
-        {/* Logo */}
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider trigger={null} collapsible collapsed={collapsed}>
         <div style={{
-          height: '70px',
+          height: 64,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          color: '#fff',
+          fontSize: collapsed ? 16 : 18,
+          fontWeight: 'bold',
           borderBottom: '1px solid rgba(255,255,255,0.1)',
-          padding: '0 20px',
         }}>
-          <span style={{ fontSize: collapsed ? '20px' : '24px', fontWeight: 'bold' }}>
-            ☀️ {collapsed ? 'SL' : 'Solaripple Lab'}
-          </span>
+          {collapsed ? 'EMS' : '光储管理平台'}
         </div>
-
-        {/* Nav */}
-        <nav style={{ padding: '20px 0' }}>
-          {menuItems.map((item) => (
-            <div
-              key={item.key}
-              onClick={() => navigate(item.key)}
-              style={{
-                padding: '14px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                background: location.pathname === item.key ? 'rgba(0,102,255,0.3)' : 'transparent',
-                borderLeft: location.pathname === item.key ? '3px solid #0066FF' : '3px solid transparent',
-                color: location.pathname === item.key ? 'white' : 'rgba(255,255,255,0.7)',
-                transition: 'all 0.2s',
-                fontSize: '15px',
-              }}
-              onMouseEnter={(e) => {
-                if (location.pathname !== item.key) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (location.pathname !== item.key) {
-                  e.currentTarget.style.background = 'transparent';
-                }
-              }}
-            >
-              <span style={{ fontSize: '18px' }}>{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
-            </div>
-          ))}
-        </nav>
-
-        {/* Collapse Button */}
-        <div
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            cursor: 'pointer',
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-        >
-          {collapsed ? '→' : '← 收起'}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div style={{
-        marginLeft: collapsed ? '80px' : '240px',
-        flex: 1,
-        background: '#F0F7FF',
-        minHeight: '100vh',
-        transition: 'margin-left 0.3s'
-      }}>
-        {/* Header */}
-        <header style={{
-          height: '70px',
-          background: 'white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={({ key }) => navigate(key)}
+        />
+      </Sider>
+      <Layout>
+        <Header style={{
+          padding: '0 16px',
+          background: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 30px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
         }}>
-          <div style={{ fontSize: '14px', color: '#666' }}>
-            Solaripple Lab - 工商业光储实验室
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {collapsed ? (
+              <MenuUnfoldOutlined style={{ fontSize: 18 }} onClick={() => setCollapsed(true)} />
+            ) : (
+              <MenuFoldOutlined style={{ fontSize: 18 }} onClick={() => setCollapsed(false)} />
+            )}
+            <span style={{ fontSize: 14, color: '#666' }}>工商业光储监控运维平台</span>
           </div>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            <a href="https://solaripple.com" style={{ color: '#0066FF', textDecoration: 'none', fontSize: '14px' }}>
-              🌐 solaripple.com
-            </a>
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Avatar icon={<UserOutlined />} style={{ cursor: 'pointer' }} />
+          </Dropdown>
+        </Header>
+        <Content style={{ margin: 16, overflow: 'initial' }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 8,
+            minHeight: 'calc(100vh - 112px)',
+            padding: 24,
+          }}>
+            <Outlet />
           </div>
-        </header>
-
-        {/* Content */}
-        <main style={{ padding: '24px' }}>
-          <Outlet />
-        </main>
-      </div>
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 }
