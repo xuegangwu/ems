@@ -1,62 +1,9 @@
 import { useState } from 'react';
-import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, InputNumber, Select, message, Progress, Statistic, Badge } from 'antd';
+import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, InputNumber, Select, message, Statistic } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import ReactECharts from 'echarts-for-react';
 import type { DistributedResource, DispatchOrder, VPP聚合 } from '../types';
 
-const resourceColumns: ColumnsType<DistributedResource> = [
-  { title: '资源名称', dataIndex: 'name', key: 'name' },
-  { title: '类型', dataIndex: 'type', key: 'type', render: (t) => {
-    const map: Record<string, { color: string; text: string }> = {
-      battery: { color: 'blue', text: '储能' },
-      ev_charger: { color: 'green', text: '充电桩' },
-      heat_pump: { color: 'orange', text: '热泵' },
-      flexible_load: { color: 'purple', text: '可调负荷' },
-    };
-    return <Tag color={map[t]?.color}>{map[t]?.text || t}</Tag>;
-  }},
-  { title: '容量 (kW)', dataIndex: 'capacity', key: 'capacity' },
-  { title: '当前功率 (kW)', dataIndex: 'currentPower', key: 'currentPower' },
-  { title: '状态', dataIndex: 'status', key: 'status', render: (s) => {
-    const map: Record<string, { color: string; text: string }> = {
-      online: { color: 'success', text: '在线' },
-      offline: { color: 'default', text: '离线' },
-      dispatching: { color: 'processing', text: '调度中' },
-      standby: { color: 'warning', text: '待机' },
-    };
-    return <Badge status={map[s]?.color as any} text={map[s]?.text || s} />;
-  }},
-  { title: '可调度', dataIndex: 'dispatchable', key: 'dispatchable', render: (d) => d ? <Tag color="green">是</Tag> : <Tag color="red">否</Tag> },
-  { title: '响应时间', dataIndex: 'responseTime', key: 'responseTime', render: (t) => `${t}s` },
-  {
-    title: '操作',
-    key: 'action',
-    render: (_, r) => r.dispatchable ? (
-      <Button size="small" type="link" onClick={() => handleDispatch(r)}>调度</Button>
-    ) : null,
-  },
-];
-
-const orderColumns: ColumnsType<DispatchOrder> = [
-  { title: '订单ID', dataIndex: 'id', key: 'id', width: 200 },
-  { title: 'VPP', dataIndex: 'vppId', key: 'vppId' },
-  { title: '方向', dataIndex: 'direction', key: 'direction', render: (d) => <Tag color={d === 'charge' ? 'blue' : 'green'}>{d === 'charge' ? '充电' : '放电'}</Tag> },
-  { title: '功率 (kW)', dataIndex: 'power', key: 'power' },
-  { title: '时长 (min)', dataIndex: 'duration', key: 'duration' },
-  { title: '原因', dataIndex: 'reason', key: 'reason' },
-  { title: '状态', dataIndex: 'status', key: 'status', render: (s) => {
-    const map: Record<string, { color: string; text: string }> = {
-      pending: { color: 'orange', text: '待执行' },
-      executing: { color: 'processing', text: '执行中' },
-      completed: { color: 'green', text: '已完成' },
-      failed: { color: 'red', text: '失败' },
-    };
-    return <Tag color={map[s]?.color}>{map[s]?.text || s}</Tag>;
-  }},
-  { title: '时间', dataIndex: 'timestamp', key: 'timestamp', width: 160 },
-];
-
-// Mock VPP data
 const mockVPP: VPP聚合 = {
   id: 'vpp-001',
   name: '华东虚拟电厂',
@@ -68,7 +15,6 @@ const mockVPP: VPP聚合 = {
   status: 'active',
 };
 
-// Mock resources
 const mockResources: DistributedResource[] = [
   { id: 'r-001', name: '苏州工业园储能', type: 'battery', capacity: 1000, currentPower: 320, status: 'online', stationId: 's-001', location: '苏州工业园', dispatchable: true, responseTime: 5 },
   { id: 'r-002', name: '杭州光储储能', type: 'battery', capacity: 500, currentPower: 180, status: 'dispatching', stationId: 's-003', location: '杭州', dispatchable: true, responseTime: 8 },
@@ -77,12 +23,32 @@ const mockResources: DistributedResource[] = [
   { id: 'r-005', name: '苏州可调负荷#2', type: 'flexible_load', capacity: 600, currentPower: 420, status: 'online', stationId: 's-006', location: '苏州', dispatchable: false, responseTime: 30 },
 ];
 
-// Mock dispatch orders
 const mockOrders: DispatchOrder[] = [
   { id: 'do-001', vppId: '华东虚拟电厂', direction: 'discharge', power: 500, duration: 30, reason: '高峰电价套利', status: 'completed', timestamp: '2026-03-31 08:30:00' },
   { id: 'do-002', vppId: '华东虚拟电厂', direction: 'charge', power: 300, duration: 60, reason: '谷时储电', status: 'completed', timestamp: '2026-03-31 02:00:00' },
   { id: 'do-003', vppId: '华东虚拟电厂', direction: 'discharge', power: 200, duration: 20, reason: '需求响应', status: 'executing', timestamp: '2026-03-31 09:00:00' },
 ];
+
+const typeMap: Record<string, { color: string; text: string }> = {
+  battery: { color: 'blue', text: '储能' },
+  ev_charger: { color: 'green', text: '充电桩' },
+  heat_pump: { color: 'orange', text: '热泵' },
+  flexible_load: { color: 'purple', text: '可调负荷' },
+};
+
+const statusMap: Record<string, { color: string; text: string }> = {
+  online: { color: 'success', text: '在线' },
+  offline: { color: 'default', text: '离线' },
+  dispatching: { color: 'processing', text: '调度中' },
+  standby: { color: 'warning', text: '待机' },
+};
+
+const orderStatusMap: Record<string, { color: string; text: string }> = {
+  pending: { color: 'orange', text: '待执行' },
+  executing: { color: 'processing', text: '执行中' },
+  completed: { color: 'green', text: '已完成' },
+  failed: { color: 'red', text: '失败' },
+};
 
 export default function VPP() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,13 +69,40 @@ export default function VPP() {
     });
   };
 
-  // Dispatch capability chart
+  const resourceColumns: ColumnsType<DistributedResource> = [
+    { title: '资源名称', dataIndex: 'name', key: 'name' },
+    { title: '类型', dataIndex: 'type', key: 'type', render: (t: string) => <Tag color={typeMap[t]?.color}>{typeMap[t]?.text || t}</Tag> },
+    { title: '容量 (kW)', dataIndex: 'capacity', key: 'capacity' },
+    { title: '当前功率 (kW)', dataIndex: 'currentPower', key: 'currentPower' },
+    { title: '状态', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusMap[s]?.color}>{statusMap[s]?.text || s}</Tag> },
+    { title: '可调度', dataIndex: 'dispatchable', key: 'dispatchable', render: (d: boolean) => d ? <Tag color="green">是</Tag> : <Tag color="red">否</Tag> },
+    { title: '响应时间', dataIndex: 'responseTime', key: 'responseTime', render: (t: number) => `${t}s` },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: unknown, r: DistributedResource) => r.dispatchable ? (
+        <Button size="small" type="link" onClick={() => handleDispatch(r)}>调度</Button>
+      ) : null,
+    },
+  ];
+
+  const orderColumns: ColumnsType<DispatchOrder> = [
+    { title: '订单ID', dataIndex: 'id', key: 'id', width: 200 },
+    { title: 'VPP', dataIndex: 'vppId', key: 'vppId' },
+    { title: '方向', dataIndex: 'direction', key: 'direction', render: (d: string) => <Tag color={d === 'charge' ? 'blue' : 'green'}>{d === 'charge' ? '充电' : '放电'}</Tag> },
+    { title: '功率 (kW)', dataIndex: 'power', key: 'power' },
+    { title: '时长 (min)', dataIndex: 'duration', key: 'duration' },
+    { title: '原因', dataIndex: 'reason', key: 'reason' },
+    { title: '状态', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={orderStatusMap[s]?.color}>{orderStatusMap[s]?.text || s}</Tag> },
+    { title: '时间', dataIndex: 'timestamp', key: 'timestamp', width: 160 },
+  ];
+
   const dispatchCapabilityOption = {
     title: { text: '调度能力分布', left: 'center', textStyle: { fontSize: 14 } },
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item' as const },
     legend: { bottom: 0 },
     series: [{
-      type: 'pie',
+      type: 'pie' as const,
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
       itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
@@ -123,16 +116,15 @@ export default function VPP() {
     }],
   };
 
-  // Capacity timeline
   const capacityTimelineOption = {
     title: { text: '可用容量趋势 (24h)', left: 'center', textStyle: { fontSize: 14 } },
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis' as const },
     grid: { top: 20, right: 20, bottom: 30, left: 50 },
-    xAxis: { type: 'category', data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'] },
-    yAxis: { type: 'value', name: 'kWh', min: 0 },
+    xAxis: { type: 'category' as const, data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'] },
+    yAxis: { type: 'value' as const, name: 'kWh', min: 0 },
     series: [{
       name: '可用容量',
-      type: 'bar',
+      type: 'bar' as const,
       data: [4100, 4200, 3800, 3600, 3500, 3700, 3800],
       itemStyle: { color: '#0066FF', borderRadius: [4, 4, 0, 0] },
     }],
@@ -142,42 +134,18 @@ export default function VPP() {
     <div>
       <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>🔗 虚拟电厂 (VPP)</h2>
 
-      {/* VPP Overview */}
       <Row gutter={[16, 16]}>
         <Col xs={12} lg={6}>
-          <Card>
-            <Statistic
-              title="聚合总容量"
-              value={mockVPP.totalCapacity}
-              suffix="kW"
-              valueStyle={{ color: '#0066FF' }}
-            />
-          </Card>
+          <Card><Statistic title="聚合总容量" value={mockVPP.totalCapacity} suffix="kW" valueStyle={{ color: '#0066FF' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card>
-            <Statistic
-              title="可调度容量"
-              value={mockVPP.availableCapacity}
-              suffix="kW"
-              valueStyle={{ color: '#00D4AA' }}
-            />
-          </Card>
+          <Card><Statistic title="可调度容量" value={mockVPP.availableCapacity} suffix="kW" valueStyle={{ color: '#00D4AA' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card>
-            <Statistic
-              title="当前调度中"
-              value={mockVPP.dispatchingCapacity}
-              suffix="kW"
-              valueStyle={{ color: '#FF9500' }}
-            />
-          </Card>
+          <Card><Statistic title="当前调度中" value={mockVPP.dispatchingCapacity} suffix="kW" valueStyle={{ color: '#FF9500' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card>
-            <Statistic title="接入资源数" value={mockVPP.resourceCount} suffix="个" />
-          </Card>
+          <Card><Statistic title="接入资源数" value={mockVPP.resourceCount} suffix="个" /></Card>
         </Col>
       </Row>
 
@@ -190,7 +158,6 @@ export default function VPP() {
         </Col>
       </Row>
 
-      {/* Resource List */}
       <Card style={{ marginTop: 16 }} title="分布式资源">
         <Space style={{ marginBottom: 12 }}>
           <Select defaultValue="all" style={{ width: 120 }}>
@@ -210,26 +177,14 @@ export default function VPP() {
         <Table dataSource={mockResources} columns={resourceColumns} rowKey="id" pagination={{ pageSize: 5 }} />
       </Card>
 
-      {/* Dispatch Orders */}
       <Card style={{ marginTop: 16 }} title="调度记录">
         <Table dataSource={mockOrders} columns={orderColumns} rowKey="id" pagination={{ pageSize: 5 }} />
       </Card>
 
-      {/* Dispatch Modal */}
-      <Modal
-        title={`调度指令 - ${selectedResource?.name || ''}`}
-        open={isModalOpen}
-        onOk={handleSubmitDispatch}
-        onCancel={() => setIsModalOpen(false)}
-      >
+      <Modal title={`调度指令 - ${selectedResource?.name || ''}`} open={isModalOpen} onOk={handleSubmitDispatch} onCancel={() => setIsModalOpen(false)}>
         <Form form={form} layout="vertical">
           <Form.Item label="调度方向" name="direction" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'charge', label: '充电 (储电)' },
-                { value: 'discharge', label: '放电 (售电)' },
-              ]}
-            />
+            <Select options={[{ value: 'charge', label: '充电 (储电)' }, { value: 'discharge', label: '放电 (售电)' }]} />
           </Form.Item>
           <Row gutter={12}>
             <Col span={12}>
@@ -244,14 +199,12 @@ export default function VPP() {
             </Col>
           </Row>
           <Form.Item label="调度原因" name="reason" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'peak_arbitrage', label: '峰时电价套利' },
-                { value: 'valley_charge', label: '谷时储电' },
-                { value: 'demand_response', label: '需求响应' },
-                { value: 'grid_ancillary', label: '电网调频辅助' },
-              ]}
-            />
+            <Select options={[
+              { value: 'peak_arbitrage', label: '峰时电价套利' },
+              { value: 'valley_charge', label: '谷时储电' },
+              { value: 'demand_response', label: '需求响应' },
+              { value: 'grid_ancillary', label: '电网调频辅助' },
+            ]} />
           </Form.Item>
         </Form>
       </Modal>
