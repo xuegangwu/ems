@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Row, Col } from 'antd';
-import { ThunderboltOutlined, RiseOutlined, FallOutlined, DollarOutlined, CloudOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, RiseOutlined, FallOutlined, DollarOutlined, CloudOutlined, SwapOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
+import api from '../services/api';
 
 const cardStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.04)',
@@ -78,6 +80,14 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function Dashboard() {
+  const [optimal, setOptimal] = useState<{ action: { text: string; reason: string; color: string }; bestCharge: Array<{ time: string; price: number }>; bestDischarge: Array<{ time: string; price: number }> } | null>(null);
+
+  useEffect(() => {
+    api.get('/electricity/prices/half-hourly?region=华东电网').then(r => {
+      if (r.data.success) setOptimal(r.data.data.optimal);
+    }).catch(() => {});
+  }, []);
+
   return (
     <div>
       <h2 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600, color: 'white' }}>总览</h2>
@@ -122,17 +132,39 @@ export default function Dashboard() {
           </ChartCard>
         </Col>
         <Col xs={24} lg={12}>
-          <ChartCard title="🏭 电站状态">
-            {[
-              { label: '在线电站', value: 28, color: '#00D4AA' },
-              { label: '离线电站', value: 2, color: '#FF4D4F' },
-              { label: '维护中', value: 3, color: '#FF9500' },
-            ].map(item => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{item.label}</span>
-                <span style={{ fontWeight: 700, fontSize: 20, color: item.color }}>{item.value}</span>
+          <ChartCard title="⚡ 智能调度建议">
+            {optimal ? (
+              <div>
+                <div style={{ padding: '10px 14px', background: `${optimal.action.color}15`, border: `1px solid ${optimal.action.color}30`, borderRadius: 8, marginBottom: 14 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: optimal.action.color, marginBottom: 4 }}>{optimal.action.text}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{optimal.action.reason}</div>
+                </div>
+                <Row gutter={[8, 8]}>
+                  <Col span={12}>
+                    <div style={{ padding: '10px 12px', background: 'rgba(0,212,170,0.08)', borderRadius: 8, border: '1px solid rgba(0,212,170,0.15)' }}>
+                      <div style={{ fontSize: 11, color: '#00D4AA', marginBottom: 4 }}>⚡ 最佳充电时段</div>
+                      {optimal.bestCharge.slice(0, 2).map(s => (
+                        <div key={s.time} style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{s.time} <span style={{ fontSize: 11, color: '#00D4AA' }}>¥{s.price.toFixed(4)}</span></div>
+                      ))}
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ padding: '10px 12px', background: 'rgba(255,77,79,0.08)', borderRadius: 8, border: '1px solid rgba(255,77,79,0.15)' }}>
+                      <div style={{ fontSize: 11, color: '#FF4D4F', marginBottom: 4 }}>💰 最佳放电时段</div>
+                      {optimal.bestDischarge.slice(0, 2).map(s => (
+                        <div key={s.time} style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{s.time} <span style={{ fontSize: 11, color: '#FF4D4F' }}>¥{s.price.toFixed(4)}</span></div>
+                      ))}
+                    </div>
+                  </Col>
+                </Row>
+                <div style={{ marginTop: 10, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
+                  <SwapOutlined style={{ marginRight: 4 }} />
+                  基于实时电价 · 每分钟自动刷新
+                </div>
               </div>
-            ))}
+            ) : (
+              <div style={{ textAlign: 'center', padding: 20, color: 'rgba(255,255,255,0.3)' }}>加载中...</div>
+            )}
           </ChartCard>
         </Col>
       </Row>
