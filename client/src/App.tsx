@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import DigitalTwin from './pages/DigitalTwin';
 import Lab from './pages/Lab';
 import Projects from './pages/Projects';
 import Solutions from './pages/Solutions';
@@ -22,6 +23,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="digital-twin" element={<DigitalTwin />} />
           <Route path="lab" element={<Lab />} />
           <Route path="projects" element={<Projects />} />
           <Route path="solutions" element={<Solutions />} />

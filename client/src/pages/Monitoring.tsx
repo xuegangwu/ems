@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Card, Row, Col, Select, DatePicker, Table, Tag, Button, Space } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import ReactECharts from 'echarts-for-react';
-import { monitoringData, recentAlerts } from '../services/mockData';
-import type { MonitoringData, Alert } from '../types';
+import { recentAlerts } from '../services/mockData';
+import type { Alert } from '../types';
 
 const { RangePicker } = DatePicker;
 
@@ -36,7 +36,6 @@ const alertColumns: ColumnsType<Alert> = [
 
 export default function Monitoring() {
   const [selectedStation, setSelectedStation] = useState('all');
-  const data = monitoringData;
 
   const powerOption = {
     tooltip: { trigger: 'axis' },

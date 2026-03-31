@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, Row, Col, Select, DatePicker, Table, Tag, Button, Space, Tabs, Modal, Form, InputNumber, message, Statistic, Alert, Badge } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import ReactECharts from 'echarts-for-react';
@@ -81,7 +81,6 @@ export default function ElectricityTrade() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [region, setRegion] = useState('华东电网');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { hours, prices } = generateHeatmapData();
   const predictions = generatePredictionData();
 
@@ -119,7 +118,7 @@ export default function ElectricityTrade() {
     },
     series: [{
       type: 'heatmap',
-      data: hours.map((h, i) => [i, 0, prices[i]]),
+      data: hours.map((_, i) => [i, 0, prices[i]]),
       label: { show: false },
       itemStyle: { borderRadius: [4, 4, 4, 4], borderWidth: 2, borderColor: 'white' },
     }],
@@ -210,7 +209,7 @@ export default function ElectricityTrade() {
                 <Select.Option value="buy">购电订单</Select.Option>
                 <Select.Option value="sell">售电订单</Select.Option>
               </Select>
-              <RangePicker onChange={(d) => d && setSelectedDate(d[0]?.toDate() || null)} />
+              <RangePicker />
               <Button type="primary" onClick={() => setIsModalOpen(true)}>+ 提交订单</Button>
             </Space>
             <Table dataSource={tradeOrders} columns={orderColumns} rowKey="id" pagination={{ pageSize: 10 }} />

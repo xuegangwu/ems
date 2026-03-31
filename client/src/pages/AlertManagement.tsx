@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Table, Tag, Button, Space, Select, DatePicker, Modal, message } from 'antd';
+import { Card, Table, Tag, Button, Space, Select, DatePicker, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { alerts } from '../services/mockData';
