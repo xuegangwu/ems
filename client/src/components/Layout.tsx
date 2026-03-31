@@ -3,14 +3,16 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const MENU_ITEMS = [
   { key: '/dashboard', label: '总览', icon: '📊' },
+  { key: '/ai-prediction', label: 'AI预测中心', icon: '🤖' },
   { key: '/digital-twin', label: '数字孪生', icon: '🪩' },
   { key: '/monitoring', label: '实时监控', icon: '📡' },
-  { key: '/stations', label: '电站管理', icon: '🏭' },
   { key: '/electricity-trade', label: '电力交易', icon: '⚡' },
   { key: '/vpp', label: '虚拟电厂', icon: '🔗' },
   { key: '/station-trade', label: '电站交易', icon: '🔄' },
+  { key: '/stations', label: '电站管理', icon: '🏭' },
   { key: '/operation', label: '运营管理', icon: '📋' },
   { key: '/alerts', label: '告警管理', icon: '🚨' },
+  { key: '/api-explorer', label: 'API Explorer', icon: '🔌' },
   { key: '/lab', label: 'Solaripple Lab', icon: '🔬' },
   { key: '/projects', label: '项目案例', icon: '🏢' },
   { key: '/solutions', label: '解决方案', icon: '💡' },
