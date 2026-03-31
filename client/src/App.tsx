@@ -15,11 +15,13 @@ import AlertManagement from './pages/AlertManagement';
 import Tech from './pages/Tech';
 import Tools from './pages/Tools';
 import About from './pages/About';
+import Login from './pages/Login';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />

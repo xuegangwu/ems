@@ -242,12 +242,25 @@ export default function LayoutComponent() {
               {MENU_ITEMS.find(m => m.key === location.pathname)?.label || '总览'}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            {/* Notification Bell */}
+            <div style={{ position: 'relative', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 18 }} title="通知中心">
+              🔔
+              <span style={{ position: 'absolute', top: -4, right: -4, width: 8, height: 8, borderRadius: '50%', background: '#FF4D4F', border: '2px solid #0A0E1A' }} />
+            </div>
+            {/* Status */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', display: 'inline-block', boxShadow: '0 0 6px #00D4AA' }} />
               系统正常
             </div>
             <a href="https://solaripple.com" style={{ color: '#667EEA', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}>🌐 solaripple.com</a>
+            {/* Logout */}
+            <button
+              onClick={() => navigate('/login')}
+              style={{ background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.2)', borderRadius: 6, color: '#FF4D4F', cursor: 'pointer', padding: '5px 12px', fontSize: 12 }}
+            >
+              退出
+            </button>
           </div>
         </header>
 
