@@ -6,6 +6,8 @@ import { monitoringRoutes } from './routes/monitoringRoutes.js';
 import { tradeRoutes } from './routes/tradeRoutes.js';
 import { alertRoutes } from './routes/alertRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
+import { electricityRoutes } from './routes/electricityRoutes.js';
+import { vppRoutes } from './routes/vppRoutes.js';
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/trades', tradeRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/electricity', electricityRoutes);
+app.use('/api/vpp', vppRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

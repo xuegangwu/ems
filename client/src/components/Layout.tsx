@@ -7,7 +7,15 @@ export default function LayoutComponent() {
   const navigate = useNavigate();
 
   const menuItems = [
-    { key: '/lab', label: 'Lab 概览', icon: '🔬' },
+    { key: '/dashboard', label: '总览', icon: '📊' },
+    { key: '/monitoring', label: '实时监控', icon: '📡' },
+    { key: '/stations', label: '电站管理', icon: '🏭' },
+    { key: '/electricity-trade', label: '电力交易', icon: '⚡' },
+    { key: '/vpp', label: '虚拟电厂', icon: '🔗' },
+    { key: '/station-trade', label: '电站交易', icon: '🔄' },
+    { key: '/operation', label: '运营管理', icon: '📋' },
+    { key: '/alerts', label: '告警管理', icon: '🚨' },
+    { key: '/lab', label: 'Solaripple Lab', icon: '🔬' },
     { key: '/projects', label: '项目案例', icon: '🏢' },
     { key: '/solutions', label: '解决方案', icon: '💡' },
     { key: '/tech', label: '技术研发', icon: '⚙️' },

@@ -85,3 +85,65 @@ export interface StationTrade {
   buyer?: string;
   seller?: string;
 }
+
+// VPP - Virtual Power Plant types
+export type ResourceType = 'battery' | 'ev_charger' | 'heat_pump' | 'flexible_load';
+export type ResourceStatus = 'online' | 'offline' | 'dispatching' | 'standby';
+
+export interface DistributedResource {
+  id: string;
+  name: string;
+  type: ResourceType;
+  capacity: number; // kW
+  currentPower: number; // kW
+  status: ResourceStatus;
+  stationId: string;
+  location: string;
+  dispatchable: boolean;
+  responseTime: number; // seconds
+}
+
+export interface VPP聚合 {
+  id: string;
+  name: string;
+  totalCapacity: number; // kW
+  availableCapacity: number; // kW
+  dispatchingCapacity: number; // kW
+  resourceCount: number;
+  regions: string[];
+  status: 'active' | 'inactive' | 'dispatching';
+}
+
+export interface DispatchOrder {
+  id: string;
+  vppId: string;
+  direction: 'charge' | 'discharge';
+  power: number; // kW
+  duration: number; // minutes
+  reason: string;
+  status: 'pending' | 'executing' | 'completed' | 'failed';
+  timestamp: string;
+}
+
+export interface ElectricityPrice {
+  id: string;
+  timestamp: string;
+  peakPrice: number;
+  valleyPrice: number;
+  flatPrice: number;
+  region: string;
+  // Real-time fields
+  currentPrice?: number;
+  priceTrend?: 'rising' | 'falling' | 'stable';
+  nextPeakTime?: string;
+  nextValleyTime?: string;
+  arbitrageSuggestion?: string;
+}
+
+// Price prediction
+export interface PricePrediction {
+  timestamp: string;
+  predictedPrice: number;
+  confidence: number; // 0-1
+  reason: string;
+}
