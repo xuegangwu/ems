@@ -22,85 +22,95 @@ const Lab = () => {
     { name: '智能调度算法优化', status: '规划中', progress: 30 },
   ];
 
+  const tabs = [
+    { key: 'overview', label: '📊 概览' },
+    { key: 'projects', label: '🏢 项目' },
+    { key: 'tech', label: '⚙️ 技术' },
+    { key: 'tools', label: '🔧 工具' },
+  ];
+
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+    <div>
+      <div style={{ marginBottom: 30 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: 'white' }}>
           🧪 Solaripple Lab
         </h1>
-        <p style={{ color: '#666', fontSize: '16px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>
           工商业光储实验室 - 专注技术研发、项目验证、解决方案优化
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 24 }}>
         {stats.map((stat, idx) => (
           <div key={idx} style={{
-            background: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            textAlign: 'center'
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(102,126,234,0.12)',
+            padding: '16px',
+            borderRadius: 10,
+            textAlign: 'center',
           }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{stat.icon}</div>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0066FF' }}>{stat.value}</div>
-            <div style={{ color: '#666', fontSize: '14px' }}>{stat.label}</div>
+            <div style={{ fontSize: 28, marginBottom: 4 }}>{stat.icon}</div>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#667EEA' }}>{stat.value}</div>
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{stat.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #eee' }}>
-        {['overview', 'projects', 'tech', 'tools'].map((tab) => (
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+        {tabs.map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               border: 'none',
-              background: activeTab === tab ? '#0066FF' : 'transparent',
-              color: activeTab === tab ? 'white' : '#666',
-              borderRadius: '8px 8px 0 0',
+              background: activeTab === tab.key ? '#667EEA' : 'rgba(255,255,255,0.05)',
+              color: activeTab === tab.key ? 'white' : 'rgba(255,255,255,0.5)',
+              borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: activeTab === tab ? 'bold' : 'normal',
+              fontWeight: activeTab === tab.key ? 'bold' : 'normal',
+              fontSize: 14,
+              whiteSpace: 'nowrap',
             }}
           >
-            {tab === 'overview' ? '📊 概览' : 
-             tab === 'projects' ? '🏢 项目' : 
-             tab === 'tech' ? '⚙️ 技术' : '🔧 工具'}
+            {tab.label}
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h2 style={{ fontSize: '20px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)', padding: 24, borderRadius: 12 }}>
+          <h2 style={{ fontSize: 16, color: 'white', marginBottom: 16 }}>
             {activeTab === 'overview' && '📈 最新动态'}
             {activeTab === 'projects' && '🏢 项目案例'}
             {activeTab === 'tech' && '⚙️ 技术研发'}
             {activeTab === 'tools' && '🔧 工具箱'}
           </h2>
-          
+
           {activeTab === 'overview' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {recentProjects.map((project, idx) => (
                 <div key={idx} style={{
-                  padding: '16px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
+                  padding: '14px',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: 8,
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
                 }}>
                   <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{project.name}</div>
-                    <div style={{ fontSize: '14px', color: '#666' }}>{project.type} | {project.capacity}</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: 4, color: 'white', fontSize: 14 }}>{project.name}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{project.type} | {project.capacity}</div>
                   </div>
                   <span style={{
                     padding: '4px 12px',
-                    background: project.status === '运行中' ? '#00D4AA' : '#FFD700',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    color: '#1A1A2E'
+                    background: project.status === '运行中' ? 'rgba(0,212,170,0.2)' : 'rgba(255,215,0,0.2)',
+                    borderRadius: 12,
+                    fontSize: 11,
+                    color: project.status === '运行中' ? '#00D4AA' : '#FFD700',
+                    border: `1px solid ${project.status === '运行中' ? 'rgba(0,212,170,0.3)' : 'rgba(255,215,0,0.3)'}`,
                   }}>
                     {project.status}
                   </span>
@@ -110,36 +120,42 @@ const Lab = () => {
           )}
 
           {activeTab === 'projects' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
               {recentProjects.map((project, idx) => (
                 <div key={idx} style={{
-                  padding: '20px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  borderLeft: '4px solid #0066FF'
+                  padding: '16px',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: 8,
+                  borderLeft: '3px solid #667EEA',
                 }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{project.name}</div>
-                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>{project.type}</div>
-                  <div style={{ fontSize: '14px', color: '#0066FF' }}>⚡ {project.capacity}</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: 8, color: 'white', fontSize: 14 }}>{project.name}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>{project.type}</div>
+                  <div style={{ fontSize: 13, color: '#667EEA' }}>⚡ {project.capacity}</div>
                 </div>
               ))}
             </div>
           )}
 
           {activeTab === 'tech' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {technologies.map((tech, idx) => (
-                <div key={idx} style={{ padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 'bold' }}>{tech.name}</span>
-                    <span style={{ fontSize: '12px', color: '#666' }}>{tech.status}</span>
+                <div key={idx} style={{ padding: '14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 'bold', color: 'white', fontSize: 14 }}>{tech.name}</span>
+                    <span style={{
+                      padding: '3px 10px',
+                      background: tech.status === '已完成' ? 'rgba(0,212,170,0.2)' : tech.status === '测试中' ? 'rgba(102,126,234,0.2)' : 'rgba(255,215,0,0.2)',
+                      borderRadius: 10,
+                      fontSize: 11,
+                      color: tech.status === '已完成' ? '#00D4AA' : tech.status === '测试中' ? '#667EEA' : '#FFD700',
+                    }}>{tech.status}</span>
                   </div>
-                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px' }}>
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3 }}>
                     <div style={{
                       width: `${tech.progress}%`,
                       height: '100%',
-                      background: tech.progress === 100 ? '#00D4AA' : '#0066FF',
-                      borderRadius: '4px'
+                      background: tech.progress === 100 ? '#00D4AA' : '#667EEA',
+                      borderRadius: 3,
                     }} />
                   </div>
                 </div>
@@ -148,49 +164,28 @@ const Lab = () => {
           )}
 
           {activeTab === 'tools' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
-                <div style={{ fontWeight: 'bold' }}>投资计算器</div>
-                <div style={{ fontSize: '12px', color: '#666' }}>计算项目回报周期</div>
-              </div>
-              <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚡</div>
-                <div style={{ fontWeight: 'bold' }}>系统配置</div>
-                <div style={{ fontSize: '12px', color: '#666' }}>推荐最优方案</div>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              {[
+                { icon: '📊', name: '投资计算器', desc: '计算项目回报周期' },
+                { icon: '⚡', name: '系统配置', desc: '推荐最优方案' },
+                { icon: '📈', name: '收益分析', desc: '分析收益情况' },
+              ].map((tool, idx) => (
+                <div key={idx} style={{
+                  padding: '24px 16px',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: 8,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  border: '1px solid rgba(102,126,234,0.12)',
+                  transition: 'all 0.2s',
+                }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>{tool.icon}</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: 4, color: 'white', fontSize: 14 }}>{tool.name}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{tool.desc}</div>
+                </div>
+              ))}
             </div>
           )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '16px', marginBottom: '16px' }}>🔬 关于 Lab</h3>
-            <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.8' }}>
-              Solaripple Lab 专注于工商业光储项目的技术研发与验证，为企业提供最前沿的解决方案。
-            </p>
-            <button style={{
-              marginTop: '16px',
-              padding: '10px 20px',
-              background: '#0066FF',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}>
-              了解更多 →
-            </button>
-          </div>
-
-          <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '16px', marginBottom: '16px' }}>📞 合作咨询</h3>
-            <p style={{ fontSize: '14px', color: '#666' }}>
-              有项目合作意向？联系我们获取定制化方案。
-            </p>
-            <div style={{ marginTop: '12px', fontSize: '14px' }}>
-              📧 info@solaripple.com
-            </div>
-          </div>
         </div>
       </div>
     </div>

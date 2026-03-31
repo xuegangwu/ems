@@ -80,75 +80,75 @@ export default function StationTrade() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>电站交易</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>电站交易</h2>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+      <Row gutter={[12, 12]}>
+        <Col xs={12} lg={6}>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <span style={{ color: '#666' }}>本月交易总额</span>
-              <span style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>¥2,850,000</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>本月交易总额</span>
+              <span style={{ fontSize: 22, fontWeight: 'bold', color: '#1890ff' }}>¥2,850,000</span>
             </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} lg={6}>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <span style={{ color: '#666' }}>生效中的交易</span>
-              <span style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>28</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>生效中的交易</span>
+              <span style={{ fontSize: 22, fontWeight: 'bold', color: '#52c41a' }}>28</span>
             </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} lg={6}>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <span style={{ color: '#666' }}>总交易容量</span>
-              <span style={{ fontSize: 24, fontWeight: 'bold' }}>8,500 kW</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>总交易容量</span>
+              <span style={{ fontSize: 22, fontWeight: 'bold', color: 'rgba(255,255,255,0.9)' }}>8,500 kW</span>
             </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} lg={6}>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <span style={{ color: '#666' }}>平均单价</span>
-              <span style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>¥320/kW</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>平均单价</span>
+              <span style={{ fontSize: 22, fontWeight: 'bold', color: '#faad14' }}>¥320/kW</span>
             </Space>
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={12}>
-          <Card title="交易金额统计">
-            <ReactECharts option={tradeAmountOption} style={{ height: 280 }} />
+          <Card title="交易金额统计" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={tradeAmountOption} style={{ height: 'calc(100vw < 768 ? 240px : 280px)' }} />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="电站容量交易情况">
-            <ReactECharts option={capacityOption} style={{ height: 280 }} />
+          <Card title="电站容量交易情况" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={capacityOption} style={{ height: 'calc(100vw < 768 ? 240px : 280px)' }} />
           </Card>
         </Col>
       </Row>
 
-      <Card style={{ marginTop: 16 }}>
+      <Card style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
         <Tabs defaultActiveKey="trades">
           <TabPane tab="交易记录" key="trades">
-            <Space size="large" style={{ marginBottom: 16 }} wrap>
-              <Space>
-                <Select defaultValue="all" style={{ width: 150 }}>
-                  <Select.Option value="all">全部类型</Select.Option>
-                  <Select.Option value="capacity_auction">容量拍卖</Select.Option>
-                  <Select.Option value="ancillary_service">辅助服务</Select.Option>
-                  <Select.Option value="capacity_contract">容量合约</Select.Option>
-                </Select>
-              </Space>
+            <Space size="middle" style={{ marginBottom: 16 }} wrap>
+              <Select defaultValue="all" style={{ minWidth: 130 }}>
+                <Select.Option value="all">全部类型</Select.Option>
+                <Select.Option value="capacity_auction">容量拍卖</Select.Option>
+                <Select.Option value="ancillary_service">辅助服务</Select.Option>
+                <Select.Option value="capacity_contract">容量合约</Select.Option>
+              </Select>
               <RangePicker />
               <Button type="primary" onClick={() => setIsModalOpen(true)}>创建交易</Button>
             </Space>
-            <Table dataSource={stationTrades} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} />
+            <div style={{ overflowX: 'auto' }}>
+              <Table dataSource={stationTrades} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
+            </div>
           </TabPane>
           <TabPane tab="我的持仓" key="positions">
-            <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>暂无持仓数据</div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)' }}>暂无持仓数据</div>
           </TabPane>
         </Tabs>
       </Card>

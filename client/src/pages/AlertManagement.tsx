@@ -86,29 +86,32 @@ export default function AlertManagement() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>告警管理</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>告警管理</h2>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space size="large" wrap>
-          <Select options={typeOptions} defaultValue="all" style={{ width: 150 }} />
-          <Select options={levelOptions} defaultValue="all" style={{ width: 150 }} />
-          <Select options={statusOptions} defaultValue="all" style={{ width: 150 }} />
-          <RangePicker />
-          <Button type="primary" onClick={handleBatchAcknowledge} disabled={selectedRowKeys.length === 0}>
+      <Card style={{ marginBottom: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <Space size="middle" wrap>
+          <Select options={typeOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <Select options={levelOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <Select options={statusOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <RangePicker size="middle" />
+          <Button type="primary" onClick={handleBatchAcknowledge} disabled={selectedRowKeys.length === 0} size="middle">
             批量确认
           </Button>
-          <Button danger disabled={selectedRowKeys.length === 0}>批量删除</Button>
+          <Button danger disabled={selectedRowKeys.length === 0} size="middle">批量删除</Button>
         </Space>
       </Card>
 
-      <Card>
-        <Table
-          rowSelection={rowSelection}
-          dataSource={alerts}
-          columns={columns}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-        />
+      <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <Table
+            rowSelection={rowSelection}
+            dataSource={alerts}
+            columns={columns}
+            rowKey="id"
+            pagination={{ pageSize: 10, responsive: true }}
+            scroll={{ x: 800 }}
+          />
+        </div>
       </Card>
     </div>
   );

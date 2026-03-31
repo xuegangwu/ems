@@ -73,32 +73,36 @@ export default function StationManagement() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>电站管理</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>电站管理</h2>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space size="large" wrap>
+      <Card style={{ marginBottom: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <Space size="middle" wrap>
           <Input
             placeholder="搜索电站名称或位置"
             prefix={<SearchOutlined />}
-            style={{ width: 250 }}
+            style={{ minWidth: 180, width: '100%' }}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            size="middle"
           />
-          <Select options={typeOptions} defaultValue="all" style={{ width: 150 }} />
-          <Select options={statusOptions} defaultValue="all" style={{ width: 150 }} />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+          <Select options={typeOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <Select options={statusOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)} size="middle">
             添加电站
           </Button>
         </Space>
       </Card>
 
-      <Card>
-        <Table
-          dataSource={filteredStations}
-          columns={columns}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-        />
+      <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <Table
+            dataSource={filteredStations}
+            columns={columns}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 900 }}
+          />
+        </div>
       </Card>
 
       <Modal

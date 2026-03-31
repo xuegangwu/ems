@@ -251,39 +251,39 @@ export default function DigitalTwin() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>🪩 数字孪生</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>🪩 数字孪生</h2>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         {/* Station Selector */}
         <Col span={24}>
-          <Card>
-            <Space>
-              <span style={{ fontWeight: 500 }}>选择电站：</span>
-              <Select value={selected} onChange={setSelected} options={stationOptions} style={{ width: 260 }} />
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <Space wrap size="middle">
+              <span style={{ fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>选择电站：</span>
+              <Select value={selected} onChange={setSelected} options={stationOptions} style={{ minWidth: 200 }} />
               <Tag color={twin.station.status === 'online' ? 'green' : 'red'}>
                 {twin.station.status === 'online' ? '在线运行' : '离线'}
               </Tag>
-              <span style={{ color: '#888', fontSize: 12 }}>实时数据每3秒刷新</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>实时数据每3秒刷新</span>
             </Space>
           </Card>
         </Col>
 
         {/* Key Metrics */}
         <Col xs={12} lg={6}>
-          <Card><Statistic title="当前发电" value={twin.realTime.generation} suffix="kW" valueStyle={{ color: '#FFD700' }} /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="当前发电" value={twin.realTime.generation} suffix="kW" valueStyle={{ color: '#FFD700' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="负载消耗" value={twin.realTime.consumption} suffix="kW" valueStyle={{ color: '#9B59B6' }} /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="负载消耗" value={twin.realTime.consumption} suffix="kW" valueStyle={{ color: '#9B59B6' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="今日发电量" value={Math.round(twin.realTime.generation * 6.5)} suffix="kWh" valueStyle={{ color: '#FF9500' }} /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="今日发电量" value={Math.round(twin.realTime.generation * 6.5)} suffix="kWh" valueStyle={{ color: '#FF9500' }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>系统效率</div>
-                <div style={{ fontSize: 24, fontWeight: 600, color: '#00D4AA' }}>{twin.realTime.efficiency}%</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>系统效率</div>
+                <div style={{ fontSize: 22, fontWeight: 600, color: '#00D4AA' }}>{twin.realTime.efficiency}%</div>
               </div>
               <Progress type="circle" percent={twin.realTime.efficiency} size={50} strokeColor="#00D4AA" />
             </div>
@@ -291,44 +291,44 @@ export default function DigitalTwin() {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         {/* Energy Flow Diagram */}
         <Col xs={24} lg={14}>
-          <Card title="⚡ 能量流向图" extra={<span style={{ color: '#888', fontSize: 12 }}>{twin.station.name}</span>}>
+          <Card title="⚡ 能量流向图" extra={<span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{twin.station.name}</span>} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <EnergyFlowDiagram twin={twin} />
           </Card>
         </Col>
 
         {/* Power Flow Chart */}
         <Col xs={24} lg={10}>
-          <Card title="📈 功率趋势（最近1小时）">
+          <Card title="📈 功率趋势（最近1小时）" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <PowerFlowChart twin={twin} />
           </Card>
         </Col>
       </Row>
 
       {/* IoT Devices */}
-      <Card style={{ marginTop: 16 }} title="📡 IoT 设备状态">
-        <Row gutter={[16, 16]}>
+      <Card style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }} title="📡 IoT 设备状态">
+        <Row gutter={[12, 12]}>
           {twin.devices.map(device => (
             <Col xs={12} lg={6} key={device.id}>
               <div style={{
                 background: device.status === 'warning' ? 'rgba(255,149,0,0.1)' : 'rgba(0,102,255,0.05)',
                 border: `1px solid ${device.status === 'warning' ? '#FF9500' : 'rgba(0,102,255,0.2)'}`,
                 borderRadius: 8,
-                padding: '12px 16px',
+                padding: '12px',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Space>
-                    <span style={{ fontSize: 18 }}>{deviceTypeMap[device.type]?.icon}</span>
-                    <span style={{ fontWeight: 500, fontSize: 14 }}>{device.name}</span>
+                  <Space size="small">
+                    <span style={{ fontSize: 16 }}>{deviceTypeMap[device.type]?.icon}</span>
+                    <span style={{ fontWeight: 500, fontSize: 13, color: 'rgba(255,255,255,0.9)' }}>{device.name}</span>
                   </Space>
                   <Badge status={device.status === 'online' ? 'success' : device.status === 'warning' ? 'warning' : 'error'} />
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: deviceTypeMap[device.type]?.color }}>
-                  {device.value} <span style={{ fontSize: 12, fontWeight: 400 }}>{device.unit}</span>
+                <div style={{ fontSize: 20, fontWeight: 700, color: deviceTypeMap[device.type]?.color }}>
+                  {device.value} <span style={{ fontSize: 11, fontWeight: 400 }}>{device.unit}</span>
                 </div>
-                <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
                   更新: {device.lastUpdate}
                 </div>
               </div>
@@ -336,23 +336,18 @@ export default function DigitalTwin() {
           ))}
         </Row>
 
-        <Table
-          dataSource={twin.devices}
-          columns={deviceColumns}
-          rowKey="id"
-          pagination={false}
-          size="small"
-          style={{ marginTop: 16 }}
-        />
+        <div style={{ overflowX: 'auto', marginTop: 16 }}>
+          <Table dataSource={twin.devices} columns={deviceColumns} rowKey="id" pagination={false} size="small" scroll={{ x: 700 }} />
+        </div>
       </Card>
 
       {/* Station Info */}
-      <Card style={{ marginTop: 16 }} title="🏭 电站基本信息">
-        <Row gutter={[16, 16]}>
-          <Col xs={12} lg={6}><Statistic title="装机容量" value={twin.station.capacity} suffix="kW" /></Col>
-          <Col xs={12} lg={6}><Statistic title="当前功率" value={twin.station.peakPower} suffix="kW" valueStyle={{ color: '#FF9500' }} /></Col>
-          <Col xs={12} lg={6}><Statistic title="并网日期" value={twin.station.gridConnectionDate} /></Col>
-          <Col xs={12} lg={6}><Statistic title="运营方" value={twin.station.owner} /></Col>
+      <Card style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }} title="🏭 电站基本信息">
+        <Row gutter={[12, 12]}>
+          <Col xs={12} lg={6}><Statistic title="装机容量" value={twin.station.capacity} suffix="kW" valueStyle={{ fontSize: 18 }} /></Col>
+          <Col xs={12} lg={6}><Statistic title="当前功率" value={twin.station.peakPower} suffix="kW" valueStyle={{ color: '#FF9500', fontSize: 18 }} /></Col>
+          <Col xs={12} lg={6}><Statistic title="并网日期" value={twin.station.gridConnectionDate} valueStyle={{ fontSize: 18 }} /></Col>
+          <Col xs={12} lg={6}><Statistic title="运营方" value={twin.station.owner} valueStyle={{ fontSize: 18 }} /></Col>
         </Row>
       </Card>
     </div>

@@ -154,7 +154,7 @@ export default function ElectricityTrade() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>⚡ 电力交易</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>⚡ 电力交易</h2>
 
       {/* Strategy Alert */}
       <Alert
@@ -164,14 +164,14 @@ export default function ElectricityTrade() {
                      '电价平稳，可根据次日预测灵活调整调度策略。'}
         type={isLowPrice ? 'info' : isHighPrice ? 'warning' : 'info'}
         showIcon
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
       />
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={24} lg={12}>
-          <Card title="24小时电价热力图" extra={<Badge status="processing" text="实时更新" />}>
-            <ReactECharts option={heatmapOption} style={{ height: 200 }} />
-            <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: '#666' }}>
+          <Card title="24小时电价热力图" extra={<Badge status="processing" text="实时更新" />} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={heatmapOption} style={{ height: 'calc(100vw < 768 ? 200px : 220px)' }} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
               <span>🟢 谷时 00:00-06:00</span>
               <span>🔴 峰时 08:00-21:00</span>
               <span>🟡 平段 其余时段</span>
@@ -179,32 +179,32 @@ export default function ElectricityTrade() {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="电价走势与预测" extra={<Select value={region} onChange={setRegion} style={{ width: 120 }} size="small" />}>
-            <ReactECharts option={trendOption} style={{ height: 240 }} />
+          <Card title="电价走势与预测" extra={<Select value={region} onChange={setRegion} style={{ width: 120 }} size="small" />} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={trendOption} style={{ height: 'calc(100vw < 768 ? 200px : 260px)' }} />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="当前电价" value={currentPrice} precision={3} prefix="¥" suffix="/kWh" /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="当前电价" value={currentPrice} precision={3} prefix="¥" suffix="/kWh" valueStyle={{ color: 'white', fontSize: 20 }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="预测峰值" value={1.28} precision={3} prefix="¥" suffix="/kWh" valueStyle={{ color: '#ff4d4f' }} /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="预测峰值" value={1.28} precision={3} prefix="¥" suffix="/kWh" valueStyle={{ color: '#ff4d4f', fontSize: 20 }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="预测谷值" value={0.28} precision={3} prefix="¥" suffix="/kWh" valueStyle={{ color: '#00D4AA' }} /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="预测谷值" value={0.28} precision={3} prefix="¥" suffix="/kWh" valueStyle={{ color: '#00D4AA', fontSize: 20 }} /></Card>
         </Col>
         <Col xs={12} lg={6}>
-          <Card><Statistic title="峰谷差" value={1.00} precision={2} prefix="¥" suffix="/kWh" /></Card>
+          <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}><Statistic title="峰谷差" value={1.00} precision={2} prefix="¥" suffix="/kWh" valueStyle={{ color: 'white', fontSize: 20 }} /></Card>
         </Col>
       </Row>
 
-      <Card style={{ marginTop: 16 }}>
+      <Card style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
         <Tabs defaultActiveKey="orders">
           <TabPane tab="交易订单" key="orders">
-            <Space size="large" style={{ marginBottom: 16 }} wrap>
-              <Select defaultValue="all" style={{ width: 150 }}>
+            <Space size="middle" style={{ marginBottom: 16 }} wrap>
+              <Select defaultValue="all" style={{ minWidth: 120 }}>
                 <Select.Option value="all">全部订单</Select.Option>
                 <Select.Option value="buy">购电订单</Select.Option>
                 <Select.Option value="sell">售电订单</Select.Option>
@@ -212,32 +212,39 @@ export default function ElectricityTrade() {
               <RangePicker />
               <Button type="primary" onClick={() => setIsModalOpen(true)}>+ 提交订单</Button>
             </Space>
-            <Table dataSource={tradeOrders} columns={orderColumns} rowKey="id" pagination={{ pageSize: 10 }} />
+            <div style={{ overflowX: 'auto' }}>
+              <Table dataSource={tradeOrders} columns={orderColumns} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
+            </div>
           </TabPane>
           <TabPane tab="实时电价" key="prices">
-            <Space style={{ marginBottom: 12 }}>
-              <Select value={region} onChange={setRegion} style={{ width: 140 }}>
+            <Space style={{ marginBottom: 12 }} wrap>
+              <Select value={region} onChange={setRegion} style={{ minWidth: 120 }}>
                 <Select.Option value="华东电网">华东电网</Select.Option>
                 <Select.Option value="华北电网">华北电网</Select.Option>
                 <Select.Option value="华南电网">华南电网</Select.Option>
                 <Select.Option value="华中电网">华中电网</Select.Option>
               </Select>
-              <span style={{ color: '#666', fontSize: 12 }}>数据每15分钟刷新</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>数据每15分钟刷新</span>
             </Space>
-            <Table dataSource={electricityPrices} columns={priceColumns} rowKey="id" pagination={{ pageSize: 10 }} />
+            <div style={{ overflowX: 'auto' }}>
+              <Table dataSource={electricityPrices} columns={priceColumns} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
+            </div>
           </TabPane>
           <TabPane tab="明日预测" key="forecast">
-            <Table
-              dataSource={predictions}
-              columns={[
-                { title: '时间', dataIndex: 'timestamp', key: 'timestamp', render: (t) => new Date(t).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }) },
-                { title: '预测电价', dataIndex: 'predictedPrice', key: 'predictedPrice', render: (p) => `¥${p.toFixed(3)}` },
-                { title: '置信度', dataIndex: 'confidence', key: 'confidence', render: (c) => `${(c * 100).toFixed(0)}%` },
-                { title: '预测依据', dataIndex: 'reason', key: 'reason' },
-              ]}
-              rowKey="id"
-              pagination={{ pageSize: 8 }}
-            />
+            <div style={{ overflowX: 'auto' }}>
+              <Table
+                dataSource={predictions}
+                columns={[
+                  { title: '时间', dataIndex: 'timestamp', key: 'timestamp', render: (t) => new Date(t).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }) },
+                  { title: '预测电价', dataIndex: 'predictedPrice', key: 'predictedPrice', render: (p) => `¥${p.toFixed(3)}` },
+                  { title: '置信度', dataIndex: 'confidence', key: 'confidence', render: (c) => `${(c * 100).toFixed(0)}%` },
+                  { title: '预测依据', dataIndex: 'reason', key: 'reason' },
+                ]}
+                rowKey="id"
+                pagination={{ pageSize: 8 }}
+                scroll={{ x: 600 }}
+              />
+            </div>
           </TabPane>
         </Tabs>
       </Card>

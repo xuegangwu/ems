@@ -45,88 +45,73 @@ export default function Operation() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>运维管理</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>运维管理</h2>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={24} lg={8}>
-          <Card title="运维统计">
+          <Card title="运维统计" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>本月巡检</span>
-                <span style={{ fontWeight: 'bold' }}>45 次</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>本月故障处理</span>
-                <span style={{ fontWeight: 'bold' }}>12 次</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>待处理工单</span>
-                <span style={{ fontWeight: 'bold', color: '#faad14' }}>8 个</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span>平均响应时间</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>2.5 小时</span>
-              </div>
+              {[
+                { label: '本月巡检', value: '45 次', color: 'rgba(255,255,255,0.9)' },
+                { label: '本月故障处理', value: '12 次', color: 'rgba(255,255,255,0.9)' },
+                { label: '待处理工单', value: '8 个', color: '#faad14' },
+                { label: '平均响应时间', value: '2.5 小时', color: '#52c41a' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.label}</span>
+                  <span style={{ fontWeight: 'bold', color: item.color }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="设备维护">
+          <Card title="设备维护" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>逆变器维护</span>
-                <span style={{ fontWeight: 'bold' }}>已完成 28 台</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>组件清洗</span>
-                <span style={{ fontWeight: 'bold' }}>已完成 15 站</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>储能维护</span>
-                <span style={{ fontWeight: 'bold' }}>进行中 3 站</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span>定期检修</span>
-                <span style={{ fontWeight: 'bold' }}>待执行 5 站</span>
-              </div>
+              {[
+                { label: '逆变器维护', value: '已完成 28 台', color: '#52c41a' },
+                { label: '组件清洗', value: '已完成 15 站', color: '#52c41a' },
+                { label: '储能维护', value: '进行中 3 站', color: '#faad14' },
+                { label: '定期检修', value: '待执行 5 站', color: '#1890ff' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.label}</span>
+                  <span style={{ fontWeight: 'bold', color: item.color }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="备件库存">
+          <Card title="备件库存" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>IGBT模块</span>
-                <span style={{ fontWeight: 'bold' }}>15 个</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>光伏组件</span>
-                <span style={{ fontWeight: 'bold' }}>120 块</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>储能电池</span>
-                <span style={{ fontWeight: 'bold' }}>8 块</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span>熔断器</span>
-                <span style={{ fontWeight: 'bold' }}>200 个</span>
-              </div>
+              {[
+                { label: 'IGBT模块', value: '15 个' },
+                { label: '光伏组件', value: '120 块' },
+                { label: '储能电池', value: '8 块' },
+                { label: '熔断器', value: '200 个' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.label}</span>
+                  <span style={{ fontWeight: 'bold', color: 'rgba(255,255,255,0.9)' }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </Col>
       </Row>
 
-      <Card style={{ marginTop: 16 }}>
-        <Space size="large" style={{ marginBottom: 16 }} wrap>
-          <Space>
-            <Select options={statusOptions} defaultValue="all" style={{ width: 150 }} />
-          </Space>
-          <RangePicker />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+      <Card style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <Space size="middle" style={{ marginBottom: 16 }} wrap>
+          <Select options={statusOptions} defaultValue="all" style={{ minWidth: 120 }} size="middle" />
+          <RangePicker size="middle" />
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)} size="middle">
             创建工单
           </Button>
         </Space>
-        <Table dataSource={operationLogs} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} />
+        <div style={{ overflowX: 'auto' }}>
+          <Table dataSource={operationLogs} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
+        </div>
       </Card>
 
       <Modal
@@ -143,7 +128,7 @@ export default function Operation() {
                 { value: 'inspection', label: '巡检' },
                 { value: 'repair', label: '故障维修' },
                 { value: 'maintenance', label: '定期维护' },
-                { value: '清洗', label: '组件清洗' },
+                { value: 'cleaning', label: '组件清洗' },
               ]}
             />
           </Form.Item>

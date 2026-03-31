@@ -68,7 +68,7 @@ export default function Dashboard() {
   return (
     <div>
       <h2 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600, color: 'white' }}>总览</h2>
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={12} lg={6}>
           <StatCard title="总装机容量" value={12.8} suffix="MW" prefix={<ThunderboltOutlined style={{ color: '#667EEA', fontSize: 18 }} />} valueColor="#667EEA" />
         </Col>
@@ -83,20 +83,20 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={14}>
           <ChartCard title="⚡ 实时功率">
-            <ReactECharts option={powerData} style={{ height: 280 }} />
+            <ReactECharts option={powerData} style={{ height: 'calc(100vw < 768 ? 220px : 280px)' }} />
           </ChartCard>
         </Col>
         <Col xs={24} lg={10}>
           <ChartCard title="📊 月度发电量">
-            <ReactECharts option={energyData} style={{ height: 280 }} />
+            <ReactECharts option={energyData} style={{ height: 'calc(100vw < 768 ? 220px : 280px)' }} />
           </ChartCard>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={8}>
           <ChartCard title="🏭 电站状态">
             {[

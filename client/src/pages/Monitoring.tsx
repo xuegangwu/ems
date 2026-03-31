@@ -69,87 +69,73 @@ export default function Monitoring() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500 }}>监控中心</h2>
+      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>监控中心</h2>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space size="large" wrap>
+      <Card style={{ marginBottom: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+        <Space size="middle" wrap style={{ alignItems: 'center' }}>
           <Space>
-            <span>选择电站:</span>
-            <Select options={stationOptions} value={selectedStation} onChange={setSelectedStation} style={{ width: 200 }} />
+            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>选择电站:</span>
+            <Select options={stationOptions} value={selectedStation} onChange={setSelectedStation} style={{ minWidth: 160 }} size="middle" />
           </Space>
-          <RangePicker />
-          <Button type="primary">查询</Button>
-          <Button>导出</Button>
+          <RangePicker size="middle" />
+          <Button type="primary" size="middle">查询</Button>
+          <Button size="middle">导出</Button>
         </Space>
       </Card>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={24} lg={12}>
-          <Card title="功率曲线">
-            <ReactECharts option={powerOption} style={{ height: 300 }} />
+          <Card title="功率曲线" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={powerOption} style={{ height: 'calc(100vw < 768 ? 240px : 300px)' }} />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="能量统计">
-            <ReactECharts option={energyOption} style={{ height: 300 }} />
+          <Card title="能量统计" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <ReactECharts option={energyOption} style={{ height: 'calc(100vw < 768 ? 240px : 300px)' }} />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={8}>
-          <Card title="关键指标">
+          <Card title="关键指标" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>今日发电量</span>
-                <span style={{ fontWeight: 'bold', color: '#1890ff' }}>45,600 kWh</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>系统效率</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>86.5%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>平均辐照度</span>
-                <span style={{ fontWeight: 'bold' }}>4.2 kWh/m²</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span>逆变器利用率</span>
-                <span style={{ fontWeight: 'bold', color: '#722ed1' }}>94.8%</span>
-              </div>
+              {[
+                { label: '今日发电量', value: '45,600 kWh', color: '#FFD700' },
+                { label: '系统效率', value: '86.5%', color: '#52c41a' },
+                { label: '平均辐照度', value: '4.2 kWh/m²', color: 'rgba(255,255,255,0.8)' },
+                { label: '逆变器利用率', value: '94.8%', color: '#9B59B6' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.label}</span>
+                  <span style={{ fontWeight: 'bold', color: item.color }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="设备状态">
+          <Card title="设备状态" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>逆变器</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>在线 28/30</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>汇流箱</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>在线 120/120</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span>储能PCS</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>在线 15/15</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span>电表</span>
-                <span style={{ fontWeight: 'bold', color: '#52c41a' }}>在线 45/45</span>
-              </div>
+              {[
+                { label: '逆变器', value: '在线 28/30', color: '#52c41a' },
+                { label: '汇流箱', value: '在线 120/120', color: '#52c41a' },
+                { label: '储能PCS', value: '在线 15/15', color: '#52c41a' },
+                { label: '电表', value: '在线 45/45', color: '#52c41a' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.label}</span>
+                  <span style={{ fontWeight: 'bold', color: item.color }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="告警信息">
-            <Table
-              dataSource={recentAlerts}
-              columns={alertColumns}
-              size="small"
-              pagination={false}
-              rowKey="id"
-            />
+          <Card title="告警信息" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <Table dataSource={recentAlerts} columns={alertColumns} size="small" pagination={false} rowKey="id" scroll={{ x: 600 }} />
+            </div>
           </Card>
         </Col>
       </Row>
