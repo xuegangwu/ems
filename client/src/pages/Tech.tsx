@@ -7,36 +7,38 @@ const Tech = () => {
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '20px' }}>⚙️ 技术研发</h1>
-      <p style={{ color: '#666', marginBottom: '30px' }}>新技术测试与验证</p>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div>
+      <h1 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: 'white' }}>⚙️ 技术研发</h1>
+      <p style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 24, fontSize: 14 }}>新技术测试与验证</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {technologies.map((tech, idx) => (
           <div key={idx} style={{
-            background: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(102,126,234,0.12)',
+            padding: 24,
+            borderRadius: 12,
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{tech.name}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 'bold', fontSize: 16, color: 'white' }}>{tech.name}</span>
               <span style={{
-                padding: '4px 12px',
-                background: tech.status === '已完成' ? '#00D4AA' : tech.status === '测试中' ? '#0066FF' : '#FFD700',
-                borderRadius: '12px',
-                fontSize: '12px'
+                padding: '4px 14px',
+                background: tech.status === '已完成' ? 'rgba(0,212,170,0.15)' : tech.status === '测试中' ? 'rgba(102,126,234,0.15)' : 'rgba(255,215,0,0.15)',
+                borderRadius: 12,
+                fontSize: 12,
+                color: tech.status === '已完成' ? '#00D4AA' : tech.status === '测试中' ? '#667EEA' : '#FFD700',
+                border: `1px solid ${tech.status === '已完成' ? 'rgba(0,212,170,0.3)' : tech.status === '测试中' ? 'rgba(102,126,234,0.3)' : 'rgba(255,215,0,0.3)'}`,
               }}>{tech.status}</span>
             </div>
-            <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px' }}>
+            <div style={{ height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 4 }}>
               <div style={{
                 width: `${tech.progress}%`,
                 height: '100%',
-                background: tech.progress === 100 ? '#00D4AA' : '#0066FF',
-                borderRadius: '4px'
+                background: tech.progress === 100 ? '#00D4AA' : '#667EEA',
+                borderRadius: 4,
               }} />
             </div>
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>{tech.progress}%</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>{tech.progress}%</div>
           </div>
         ))}
       </div>

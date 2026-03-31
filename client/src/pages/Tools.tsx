@@ -6,24 +6,24 @@ const Tools = () => {
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '20px' }}>🔧 工具箱</h1>
-      <p style={{ color: '#666', marginBottom: '30px' }}>项目分析与计算工具</p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+    <div>
+      <h1 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: 'white' }}>🔧 工具箱</h1>
+      <p style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 24, fontSize: 14 }}>项目分析与计算工具</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         {tools.map((tool, idx) => (
           <div key={idx} style={{
-            background: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(102,126,234,0.12)',
+            padding: 32,
+            borderRadius: 12,
             textAlign: 'center',
             cursor: 'pointer',
-            transition: 'all 0.3s',
+            transition: 'all 0.2s',
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>{tool.icon}</div>
-            <h3 style={{ marginBottom: '8px' }}>{tool.name}</h3>
-            <p style={{ fontSize: '14px', color: '#666' }}>{tool.desc}</p>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>{tool.icon}</div>
+            <h3 style={{ marginBottom: 8, color: 'white', fontSize: 16, fontWeight: 600 }}>{tool.name}</h3>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{tool.desc}</p>
           </div>
         ))}
       </div>
