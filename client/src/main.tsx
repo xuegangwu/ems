@@ -17,7 +17,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           colorText: 'rgba(255,255,255,0.87)',
           colorTextSecondary: 'rgba(255,255,255,0.6)',
           borderRadius: 8,
-          fontFamily: 'Inter, system-ui, sans-serif',
+          fontFamily: "'Inter', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif",
+          fontSize: 14,
         },
         components: {
           Card: {

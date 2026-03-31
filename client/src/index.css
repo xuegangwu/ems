@@ -1,5 +1,5 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
@@ -20,6 +20,8 @@
 body {
   min-height: 100vh;
   background-color: #0A0E1A;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 #root {
@@ -39,21 +41,183 @@ button {
   font: inherit;
 }
 
-/* Scrollbar styling */
+/* Typography scale */
+h1, h2, h3, h4, h5, h6 {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Ant Design overrides */
+.ant-card-head-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+
+.ant-card-body {
+  font-size: 13px;
+}
+
+.ant-table-thead > tr > th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,0.6) !important;
+  background: rgba(102,126,234,0.08) !important;
+  border-bottom: 1px solid rgba(102,126,234,0.12) !important;
+}
+
+.ant-table-tbody > tr > td {
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.75) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(102,126,234,0.06) !important;
+}
+
+.ant-statistic-title {
+  font-size: 12px !important;
+  color: rgba(255,255,255,0.45) !important;
+}
+
+.ant-statistic-content {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+}
+
+.ant-tabs-tab {
+  font-size: 14px !important;
+  color: rgba(255,255,255,0.5) !important;
+  font-weight: 500 !important;
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #667EEA !important;
+  font-weight: 600 !important;
+}
+
+.ant-tabs-ink-bar {
+  background: #667EEA !important;
+}
+
+.ant-modal-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+.ant-modal-header {
+  background: rgba(255,255,255,0.04) !important;
+  border-bottom: 1px solid rgba(102,126,234,0.12) !important;
+}
+
+.ant-modal-content {
+  background: #1A1040 !important;
+  border: 1px solid rgba(102,126,234,0.15) !important;
+}
+
+.ant-form-item-label > label {
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.7) !important;
+  font-weight: 500 !important;
+}
+
+.ant-input, .ant-select-selector, .ant-picker {
+  font-size: 13px !important;
+}
+
+.ant-select-dropdown {
+  background: #1A1040 !important;
+  border: 1px solid rgba(102,126,234,0.15) !important;
+}
+
+.ant-select-item {
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: rgba(102,126,234,0.15) !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: rgba(102,126,234,0.25) !important;
+  color: #667EEA !important;
+  font-weight: 600 !important;
+}
+
+.ant-picker-panel-container {
+  background: #1A1040 !important;
+}
+
+.ant-picker-header, .ant-picker-content th {
+  color: rgba(255,255,255,0.6) !important;
+  font-weight: 600 !important;
+}
+
+.ant-picker-cell {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  background: #667EEA !important;
+}
+
+.ant-tag {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  padding: 1px 8px !important;
+}
+
+.ant-btn {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+}
+
+.ant-badge-status-text {
+  font-size: 12px !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.ant-alert-message {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+.ant-alert-description {
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.ant-message-notice-content {
+  background: #1A1040 !important;
+  border: 1px solid rgba(102,126,234,0.15) !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.25);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
+  background: rgba(102, 126, 234, 0.45);
 }
