@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "products": "Products",
+    "platform": "Digital Twin Platform",
+    "about": "About",
+    "enter": "Enter Platform",
+    "startUsing": "Start Using"
+  },
+  "hero": {
+    "badge": "Industrial Clean Energy Digital Infrastructure",
+    "title1": "Give Every Industrial Park an",
+    "title2": "Intelligent Energy Brain",
+    "subtitle": "Solaripple leverages digital twin, AI, and optimization algorithms to provide integrated solar-storage-charging management and VPP trading services for commercial and industrial parks, reducing electricity costs and maximizing asset returns.",
+    "enterEnos": "Enter EnOS Platform",
+    "learnMore": "Learn More"
+  },
+  "stats": {
+    "capacity": "Managed Capacity",
+    "parks": "Industrial Clients",
+    "saving": "Avg. Cost Reduction",
+    "uptime": "System Uptime"
+  },
+  "products": {
+    "label": "Core Products",
+    "title": "Integrated Energy Management System",
+    "subtitle": "From hardware layer to application layer, from real-time monitoring to intelligent decision-making — building a complete smart energy closed loop for industrial parks.",
+    "solarStorage": {
+      "name": "Solar-Storage-Charging",
+      "desc": "Integrating solar, storage, and EV charging modules with real-time device monitoring, intelligent energy dispatch, and improved self-consumption rates.",
+      "tags": ["Solar Monitoring", "Storage BMS", "Smart Charging", "Demand Management"]
+    },
+    "digitalTwin": {
+      "name": "Digital Twin Platform",
+      "desc": "Three.js-powered real-time 3D mapping of industrial parks with device status and energy flow visualization, fully mobile-responsive.",
+      "tags": ["3D Visualization", "Real-time Data", "VPP Aggregation", "AI Prediction"]
+    },
+    "vpp": {
+      "name": "Virtual Power Plant (VPP)",
+      "desc": "Aggregating distributed storage, EV chargers, and interruptible loads to participate in grid peak shaving, frequency regulation, and demand response for additional revenue.",
+      "tags": ["Capacity Aggregation", "Market Trading", "Revenue Sharing", "Ancillary Services"]
+    },
+    "ai": {
+      "name": "AI Dispatch Engine",
+      "desc": "LSTM time-series forecasting combined with MILP optimization algorithms to predict load and solar output, enabling next-day dispatch planning and demand control.",
+      "tags": ["LSTM Forecasting", "Peak Shaving", "MILP Optimization", "Demand Control"]
+    }
+  },
+  "platform": {
+    "label": "Digital Twin Platform",
+    "title": "EnOS — All-in-One Park Energy Management",
+    "desc": "EnOS (Energy Operating System) is Solaripple's industrial energy digital foundation, mapping physical energy assets into the digital world.",
+    "features": [
+      "Real-time 3D visualization of park全景 with instant device status",
+      "Solar/storage/charging/grid data integration, 3-second refresh",
+      "AI load & solar forecasting for proactive dispatch decisions",
+      "VPP aggregation with real-time power market connectivity",
+      "Mobile-responsive, access energy assets anywhere"
+    ]
+  },
+  "cta": {
+    "title": "Ready to Upgrade Your Energy Management?",
+    "desc": "Whether for new parks or existing facilities, the Solaripple team provides full-process services from planning and design to operation and maintenance.",
+    "experience": "Experience EnOS Platform",
+    "contact": "Contact Us"
+  },
+  "footer": {
+    "brand": "Guangzhilian · Dedicated to industrial clean energy digitization, serving parks in the Yangtze River Delta.",
+    "product": "Products",
+    "solution": "Solutions",
+    "contact": "Contact",
+    "enosPlatform": "EnOS Digital Twin",
+    "digitalTwin3d": "3D Visualization",
+    "vpp": "VPP Virtual Power Plant",
+    "aiPrediction": "AI Prediction Engine",
+    "solarStorage": "Solar-Storage-Charging",
+    "demandManagement": "Demand Management",
+    "peakShaving": "Peak Shaving",
+    "demandResponse": "Demand Response",
+    "email": "contact@solaripple.com",
+    "location": "Suzhou, Jiangsu",
+    "copyright": "© 2026 Guangzhilian (Solaripple) · All Rights Reserved"
+  }
+}

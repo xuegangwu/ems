@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const MENU_ITEMS = [
@@ -27,6 +28,7 @@ const SIDEBAR_COLLAPSED = 80;
 export default function LayoutComponent() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Language switcher buttons
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -256,6 +258,7 @@ export default function LayoutComponent() {
               系统正常
             </div>
             <a href="https://solaripple.com" style={{ color: '#667EEA', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}>🌐 solaripple.com</a>
+            <LanguageSwitcher />
             {/* Logout */}
             <button
               onClick={() => navigate('/login')}

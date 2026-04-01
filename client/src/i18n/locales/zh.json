@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "products": "产品方案",
+    "platform": "数字孪生平台",
+    "about": "关于我们",
+    "enter": "进入平台",
+    "startUsing": "开始使用"
+  },
+  "hero": {
+    "badge": "工业清洁能源数字基础设施",
+    "title1": "让每一座工业园区",
+    "title2": "拥有智慧能源大脑",
+    "subtitle": "Solaripple 基于数字孪生、人工智能与优化算法，为工商业园区提供光储充一体化管理与虚拟电厂交易服务，降低电费、提升资产收益。",
+    "enterEnos": "进入 EnOS 平台",
+    "learnMore": "了解产品方案"
+  },
+  "stats": {
+    "capacity": "管理装机容量",
+    "parks": "服务工业客户",
+    "saving": "平均电费节约",
+    "uptime": "系统可用率"
+  },
+  "products": {
+    "label": "核心产品",
+    "title": "三位一体能源管理体系",
+    "subtitle": "从硬件层到应用层，从实时监控到智能决策，构建完整的工业园区智慧能源闭环。",
+    "solarStorage": {
+      "name": "光储充一体化",
+      "desc": "集成光伏、储能、充电桩三大模块，实时监测设备运行状态，智能调度能量流向，提升自发自用率与系统效率。",
+      "tags": ["光伏监控", "储能BMS", "有序充电", "需量管理"]
+    },
+    "digitalTwin": {
+      "name": "数字孪生平台",
+      "desc": "基于 Three.js 的工业园区三维实时映射，设备状态与能量流动可视化，支持移动端随时随地查看运行全景。",
+      "tags": ["3D 可视化", "实时数据", "VPP 聚合", "AI 预测"]
+    },
+    "vpp": {
+      "name": "虚拟电厂 (VPP)",
+      "desc": "聚合分布式储能、充电桩、可中断负荷，参与电网调峰调频与需求响应，获取辅助服务收益与需求响应补贴。",
+      "tags": ["容量聚合", "市场交易", "收益分配", "辅助服务"]
+    },
+    "ai": {
+      "name": "AI 调度引擎",
+      "desc": "LSTM 时序预测 + MILP 优化算法，提前预测负荷与光伏出力，制定次日充放电计划与需量控制策略。",
+      "tags": ["LSTM 预测", "削峰填谷", "MILP 调度", "需量控制"]
+    }
+  },
+  "platform": {
+    "label": "数字孪生平台",
+    "title": "EnOS — 园区能源一站式管理",
+    "desc": "EnOS (Energy Operating System) 是 Solaripple 打造的工业能源数字底座，将物理世界的能源设备完整映射到数字空间。",
+    "features": [
+      "实时 3D 可视化园区全景，设备状态一目了然",
+      "光伏/储能/充电桩/电网全量数据接入，3 秒级刷新",
+      "AI 负荷与光伏出力预测，提前调度决策",
+      "VPP 虚拟电厂聚合，实时对接电力交易中心",
+      "移动端自适应，随时随地掌控能源资产"
+    ]
+  },
+  "cta": {
+    "title": "准备好升级你的能源管理了吗？",
+    "desc": "无论是新建园区还是存量改造，Solaripple 团队提供从方案设计到运营维护的全流程服务。",
+    "experience": "体验 EnOS 平台",
+    "contact": "联系我们"
+  },
+  "footer": {
+    "brand": "光之涟漪 · 专注于工业清洁能源数字化，服务长三角地区工业园区客户。",
+    "product": "产品",
+    "solution": "方案",
+    "contact": "联系",
+    "enosPlatform": "EnOS 数字孪生",
+    "digitalTwin3d": "3D 可视化",
+    "vpp": "VPP 虚拟电厂",
+    "aiPrediction": "AI 预测引擎",
+    "solarStorage": "光储充一体",
+    "demandManagement": "需量管理",
+    "peakShaving": "削峰填谷",
+    "demandResponse": "需求响应",
+    "email": "contact@solaripple.com",
+    "location": "江苏省苏州市",
+    "copyright": "© 2026 光之涟漪 (Solaripple) · 苏ICP备xxxxxxxx号 · 版权所有"
+  }
+}
