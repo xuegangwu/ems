@@ -1,0 +1,118 @@
+/* EnOS Mobile PWA — Light Theme + Bottom Tab Bar */
+
+/* ── Layout: Sidebar hidden, full width ───────────────────────────── */
+@media (max-width: 768px) {
+  .ant-layout-sider { display: none !important; }
+  .ant-layout-content { margin-left: 0 !important; padding-bottom: 68px !important; }
+  .ant-layout { background: #EEF2F8 !important; }
+}
+
+/* ── Mobile Header ────────────────────────────────────────────────────── */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+}
+
+.mobile-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.mobile-header-back {
+  background: none;
+  border: none;
+  color: #4F7FE8;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+
+/* ── Bottom Tab Bar ──────────────────────────────────────────────────── */
+.bottom-tab-bar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 62px;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  z-index: 1000;
+  padding: 0 4px;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
+}
+
+.bottom-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  height: 100%;
+  text-decoration: none;
+  color: #9aa5b8;
+  font-size: 9px;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  padding: 6px 4px;
+}
+
+.bottom-tab-item .tab-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bottom-tab-item.active {
+  color: #4F7FE8;
+}
+
+.bottom-tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 2px;
+  background: #4F7FE8;
+  border-radius: 0 0 2px 2px;
+}
+
+/* ── Card / Page adjustments ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ant-card {
+    border-radius: 12px !important;
+    margin-bottom: 10px !important;
+  }
+  .ant-row { margin-left: -4px !important; margin-right: -4px !important; }
+  .ant-col { padding-left: 4px !important; padding-right: 4px !important; }
+  h2 { font-size: 16px !important; }
+  .ant-statistic-content-value { font-size: 18px !important; }
+}
+
+/* ── AgentPipeline / ReactFlow mobile ────────────────────────────────── */
+@media (max-width: 768px) {
+  .react-flow__renderer { min-height: 260px !important; }
+  .react-flow__controls { display: none !important; }
+  .react-flow__attribution { display: none !important; }
+}
+
+/* ── Disable hover effects on touch ──────────────────────────────────── */
+@media (hover: none) {
+  .ant-card:hover { box-shadow: 0 1px 8px rgba(0,0,0,0.06) !important; }
+}

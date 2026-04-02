@@ -14,6 +14,9 @@
     "build": "npm run build --workspace=client && npm run build --workspace=server"
   },
   "dependencies": {
-    "mongodb-memory-server": "^11.0.1"
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "mongodb-memory-server": "^11.0.1",
+    "three": "^0.160.1"
   }
 }

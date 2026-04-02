@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="80" fill="#EEF2F8"/>
+  <!-- Solar panel grid -->
+  <rect x="80" y="100" width="160" height="130" rx="12" fill="#4F7FE8" opacity="0.12"/>
+  <rect x="80" y="100" width="160" height="130" rx="12" fill="none" stroke="#4F7FE8" stroke-width="4"/>
+  <line x1="133" y1="100" x2="133" y2="230" stroke="#4F7FE8" stroke-width="3" opacity="0.5"/>
+  <line x1="187" y1="100" x2="187" y2="230" stroke="#4F7FE8" stroke-width="3" opacity="0.5"/>
+  <line x1="80" y1="155" x2="240" y2="155" stroke="#4F7FE8" stroke-width="3" opacity="0.5"/>
+  <line x1="80" y1="210" x2="240" y2="210" stroke="#4F7FE8" stroke-width="3" opacity="0.5"/>
+  <!-- Sun -->
+  <circle cx="370" cy="120" r="36" fill="#FFB020" opacity="0.9"/>
+  <path d="M370 68 Q392 94 370 120 Q348 94 370 68" stroke="#FFB020" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M370 172 Q392 146 370 120 Q348 146 370 172" stroke="#FFB020" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M318 120 Q344 88 370 120 Q344 152 318 120" stroke="#FFB020" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M422 120 Q396 88 370 120 Q396 152 422 120" stroke="#FFB020" stroke-width="4" fill="none" opacity="0.4"/>
+  <!-- Battery / storage -->
+  <rect x="176" y="290" width="160" height="90" rx="14" fill="#ffffff" stroke="#4F7FE8" stroke-width="4"/>
+  <rect x="226" y="280" width="60" height="16" rx="6" fill="#4F7FE8"/>
+  <rect x="186" y="308" width="36" height="58" rx="5" fill="#4F7FE8" opacity="0.85"/>
+  <rect x="236" y="308" width="36" height="58" rx="5" fill="#4F7FE8" opacity="0.55"/>
+  <rect x="286" y="308" width="36" height="58" rx="5" fill="#4F7FE8" opacity="0.3"/>
+  <!-- Connecting arrows -->
+  <line x1="220" y1="230" x2="220" y2="290" stroke="#4F7FE8" stroke-width="6" fill="none"/>
+  <polygon points="220,290 212,272 228,272" fill="#4F7FE8"/>
+  <line x1="292" y1="230" x2="292" y2="290" stroke="#FFB020" stroke-width="5" fill="none" opacity="0.7"/>
+  <polygon points="292,290 284,274 300,274" fill="#FFB020" opacity="0.7"/>
+  <!-- Energy flow arcs -->
+  <path d="M80 370 Q 50 420 80 460" stroke="#4F7FE8" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M432 350 Q 462 410 432 455" stroke="#4F7FE8" stroke-width="4" fill="none" opacity="0.4"/>
+  <circle cx="80" cy="466" r="14" fill="#4F7FE8" opacity="0.5"/>
+  <circle cx="432" cy="460" r="14" fill="#4F7FE8" opacity="0.5"/>
+  <!-- Label -->
+  <text x="256" y="448" font-family="system-ui,sans-serif" font-size="28" fill="#4F7FE8" text-anchor="middle" font-weight="700">EnOS</text>
+</svg>

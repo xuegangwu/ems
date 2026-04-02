@@ -1,6 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Card, Row, Col, Select, Tag, Space, Table, Progress } from 'antd';
+/**
+ * AIPrediction — Real LSTM-powered forecasting page
+ * Fetches from /api/predict/combined
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { Card, Row, Col, Tag, Table, Progress, Spin, Alert, Button } from 'antd';
+import { ReloadOutlined, ThunderboltOutlined, PauseCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
+
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '';
 
 interface ForecastPoint {
   timestamp: string;
@@ -16,110 +24,121 @@ interface ForecastPoint {
   reason: string;
 }
 
-const RECOMMENDATIONS = {
-  charge: { color: '#00D4AA', bg: 'rgba(0,212,170,0.1)', border: 'rgba(0,212,170,0.25)', text: '⚡ 建议储能充电', icon: '🔋' },
-  discharge: { color: '#FF4D4F', bg: 'rgba(255,77,79,0.1)', border: 'rgba(255,77,79,0.25)', text: '💰 建议储能放电', icon: '⚡' },
-  hold: { color: '#667EEA', bg: 'rgba(102,126,234,0.1)', border: 'rgba(102,126,234,0.25)', text: '📊 正常待机', icon: '⏸' },
+const REC = {
+  charge: {
+    color: '#00D4AA', bg: 'rgba(0,212,170,0.1)', border: 'rgba(0,212,170,0.25)',
+    text: '建议储能充电', icon: <ExperimentOutlined />,
+  },
+  discharge: {
+    color: '#FF4D4F', bg: 'rgba(255,77,79,0.1)', border: 'rgba(255,77,79,0.25)',
+    text: '建议储能放电', icon: <ThunderboltOutlined />,
+  },
+  hold: {
+    color: '#667EEA', bg: 'rgba(102,126,234,0.1)', border: 'rgba(102,126,234,0.25)',
+    text: '正常待机', icon: <PauseCircleOutlined />,
+  },
 };
 
-function generateForecast(): ForecastPoint[] {
-  const now = new Date();
-  const points: ForecastPoint[] = [];
-
-  for (let i = 1; i <= 48; i++) {
-    const t = new Date(now.getTime() + i * 3600000);
-    const hour = t.getHours();
-    const isPeak = [8,9,10,14,15,16,18,19,20].includes(hour);
-    const isValley = [0,1,2,3,4,5,6,22,23].includes(hour);
-
-    // Load forecast: business hours higher
-    const baseLoad = isPeak ? 2800 + Math.random() * 800 : isValley ? 800 + Math.random() * 400 : 1500 + Math.random() * 1000;
-    const confidence = 0.70 + Math.random() * 0.25;
-
-    // Price forecast
-    const basePrice = isPeak ? 1.05 + Math.random() * 0.25 : isValley ? 0.30 + Math.random() * 0.15 : 0.60 + Math.random() * 0.30;
-
-    // Auto recommendation
-    let recommendation: ForecastPoint['recommendation'] = 'hold';
-    let reason = '电价平稳，可灵活调度';
-    if (isValley && basePrice < 0.40) { recommendation = 'charge'; reason = '谷时低价，储能充电'; }
-    else if (isPeak && basePrice > 1.10) { recommendation = 'discharge'; reason = '峰时高价，储能放电'; }
-
-    points.push({
-      timestamp: t.toISOString(),
-      hour: `${String(hour).padStart(2,'0')}:00`,
-      load: Math.round(baseLoad),
-      loadUpper: Math.round(baseLoad * 1.12),
-      loadLower: Math.round(baseLoad * 0.88),
-      price: parseFloat(basePrice.toFixed(4)),
-      priceUpper: parseFloat((basePrice * 1.18).toFixed(4)),
-      priceLower: parseFloat((basePrice * 0.82).toFixed(4)),
-      confidence: parseFloat(confidence.toFixed(2)),
-      recommendation,
-      reason,
-    });
-  }
-  return points;
+async function fetchForecast(): Promise<ForecastPoint[]> {
+  const res = await fetch(`${API_BASE}/api/predict/combined`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error);
+  return json.data;
 }
 
 export default function AIPrediction() {
-  const [stationId, setStationId] = useState('station-001');
-  const [forecast, setForecast] = useState<ForecastPoint[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<ForecastPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-    // Simulate AI computing delay
-    setTimeout(() => {
-      setForecast(generateForecast());
+    setError(null);
+    try {
+      const points = await fetchForecast();
+      setData(points);
+      setLastUpdated(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '预测失败');
+    } finally {
       setLoading(false);
-    }, 600);
-  }, [stationId]);
+    }
+  }, []);
 
-  const futureForecast = forecast.filter(() => true).slice(0, 24);
+  useEffect(() => { loadData(); }, [loadData]);
 
+  const forecast = data; // alias
+  const display = forecast.slice(0, 24);
+
+  const avgConfidence = display.length
+    ? Math.round(display.reduce((s, d) => s + d.confidence, 0) / display.length * 100)
+    : 0;
+  const chargeCount = display.filter(d => d.recommendation === 'charge').length;
+  const dischargeCount = display.filter(d => d.recommendation === 'discharge').length;
+  const avgLoad = display.length
+    ? Math.round(display.reduce((s, d) => s + d.load, 0) / display.length)
+    : 0;
+  const avgPrice = display.length
+    ? display.reduce((s, d) => s + d.price, 0) / display.length
+    : 0;
+
+  // ─── ECharts options ───────────────────────────────────────────────────────
   const loadOption = {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(15,15,35,0.95)',
+      backgroundColor: 'rgba(255,255,255,0.95)',
       borderColor: 'rgba(102,126,234,0.3)',
-      textStyle: { color: 'white' },
+      textStyle: { color: '#fff' },
+      formatter: (params: any[]) => {
+        const p = params[0];
+        const d = display[p.dataIndex];
+        return `<b>${d.hour}</b><br/>负荷: ${(d.load / 1000).toFixed(2)} MW<br/>置信度: ${(d.confidence * 100).toFixed(0)}%`;
+      },
     },
-    legend: { data: ['预测负荷', '置信上界', '置信下界'], bottom: 0, textStyle: { color: 'rgba(255,255,255,0.6)', fontSize: 11 } },
-    grid: { top: 20, right: 20, bottom: 45, left: 55 },
+    legend: {
+      data: ['预测负荷', '上界', '下界'],
+      bottom: 0,
+      textStyle: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+    },
+    grid: { top: 16, right: 20, bottom: 44, left: 55 },
     xAxis: {
       type: 'category',
-      data: futureForecast.map(f => f.hour),
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+      data: display.map(d => d.hour),
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       axisLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 10, interval: 2 },
       axisTick: { show: false },
     },
     yAxis: {
-      type: 'value', name: 'kW',
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-      axisLabel: { color: 'rgba(255,255,255,0.4)', formatter: (v: number) => `${(v/1000).toFixed(1)}MW`, fontSize: 10 },
+      type: 'value', name: 'MW',
+      axisLine: { show: false },
+      axisLabel: {
+        color: 'rgba(255,255,255,0.4)', fontSize: 10,
+        formatter: (v: number) => `${(v / 1000).toFixed(1)}`,
+      },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
-      nameTextStyle: { color: 'rgba(255,255,255,0.3)', fontSize: 11 },
+      nameTextStyle: { color: 'rgba(255,255,255,0.25)', fontSize: 10 },
     },
     series: [
       {
         name: '预测负荷',
         type: 'line',
-        data: futureForecast.map(f => ({ value: f.load, itemStyle: { color: '#667EEA' } })),
-        smooth: true, lineStyle: { width: 2, color: '#667EEA' },
+        data: display.map(d => ({ value: d.load, itemStyle: { color: '#667EEA' } })),
+        smooth: 0.4, lineStyle: { width: 2.5, color: '#667EEA' },
         areaStyle: { color: 'rgba(102,126,234,0.12)' },
-        symbol: 'circle', symbolSize: 4,
+        symbol: 'circle', symbolSize: 5,
       },
       {
-        name: '置信上界',
-        type: 'line', data: futureForecast.map(f => f.loadUpper),
-        smooth: true, lineStyle: { width: 1, color: '#667EEA', type: 'dashed', opacity: 0.4 }, symbol: 'none',
+        name: '上界',
+        type: 'line', data: display.map(d => d.loadUpper),
+        smooth: 0.4, lineStyle: { width: 1, color: '#667EEA', type: 'dashed', opacity: 0.35 }, symbol: 'none',
       },
       {
-        name: '置信下界',
-        type: 'line', data: futureForecast.map(f => f.loadLower),
-        smooth: true, lineStyle: { width: 1, color: '#667EEA', type: 'dashed', opacity: 0.4 }, symbol: 'none',
+        name: '下界',
+        type: 'line', data: display.map(d => d.loadLower),
+        smooth: 0.4, lineStyle: { width: 1, color: '#667EEA', type: 'dashed', opacity: 0.35 }, symbol: 'none',
       },
     ],
   };
@@ -128,148 +147,293 @@ export default function AIPrediction() {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(15,15,35,0.95)',
-      borderColor: 'rgba(102,126,234,0.3)',
-      textStyle: { color: 'white' },
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      borderColor: 'rgba(255,149,0,0.3)',
+      textStyle: { color: '#fff' },
+      formatter: (params: any[]) => {
+        const d = display[params[0].dataIndex];
+        return `<b>${d.hour}</b><br/>电价: ¥${d.price.toFixed(3)}/kWh<br/>区间: [¥${d.priceLower.toFixed(3)}, ¥${d.priceUpper.toFixed(3)}]`;
+      },
     },
-    legend: { data: ['预测电价', '上界', '下界'], bottom: 0, textStyle: { color: 'rgba(255,255,255,0.6)', fontSize: 11 } },
-    grid: { top: 20, right: 20, bottom: 45, left: 55 },
+    legend: {
+      data: ['预测电价', '上界', '下界'],
+      bottom: 0,
+      textStyle: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+    },
+    grid: { top: 16, right: 20, bottom: 44, left: 55 },
     xAxis: {
       type: 'category',
-      data: futureForecast.map(f => f.hour),
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+      data: display.map(d => d.hour),
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       axisLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 10, interval: 2 },
       axisTick: { show: false },
     },
     yAxis: {
       type: 'value', name: '元/kWh',
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-      axisLabel: { color: 'rgba(255,255,255,0.4)', formatter: (v: number) => `¥${v.toFixed(2)}`, fontSize: 10 },
+      axisLine: { show: false },
+      axisLabel: {
+        color: 'rgba(255,255,255,0.4)', fontSize: 10,
+        formatter: (v: number) => `¥${v.toFixed(2)}`,
+      },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
-      nameTextStyle: { color: 'rgba(255,255,255,0.3)', fontSize: 11 },
+      nameTextStyle: { color: 'rgba(255,255,255,0.25)', fontSize: 10 },
     },
     series: [
       {
         name: '预测电价',
         type: 'line',
-        data: futureForecast.map(f => ({ value: f.price, itemStyle: { color: '#FF9500' } })),
-        smooth: true, lineStyle: { width: 2, color: '#FF9500' },
+        data: display.map(d => ({ value: d.price, itemStyle: { color: '#FF9500' } })),
+        smooth: 0.4, lineStyle: { width: 2.5, color: '#FF9500' },
         areaStyle: { color: 'rgba(255,149,0,0.1)' },
-        symbol: 'circle', symbolSize: 4,
+        symbol: 'circle', symbolSize: 5,
       },
       {
         name: '上界',
-        type: 'line', data: futureForecast.map(f => f.priceUpper),
-        smooth: true, lineStyle: { width: 1, color: '#FF9500', type: 'dashed', opacity: 0.3 }, symbol: 'none',
+        type: 'line', data: display.map(d => d.priceUpper),
+        smooth: 0.4, lineStyle: { width: 1, color: '#FF9500', type: 'dashed', opacity: 0.3 }, symbol: 'none',
       },
       {
         name: '下界',
-        type: 'line', data: futureForecast.map(f => f.priceLower),
-        smooth: true, lineStyle: { width: 1, color: '#FF9500', type: 'dashed', opacity: 0.3 }, symbol: 'none',
+        type: 'line', data: display.map(d => d.priceLower),
+        smooth: 0.4, lineStyle: { width: 1, color: '#FF9500', type: 'dashed', opacity: 0.3 }, symbol: 'none',
       },
     ],
   };
 
-  const confidenceAvg = futureForecast.length > 0
-    ? Math.round(futureForecast.reduce((s, f) => s + f.confidence, 0) / futureForecast.length * 100)
-    : 0;
-  const chargeCount = futureForecast.filter(f => f.recommendation === 'charge').length;
-  const dischargeCount = futureForecast.filter(f => f.recommendation === 'discharge').length;
+  // ─── Dispatch summary by hour ─────────────────────────────────────────────
+  const dispatchSummary = [
+    {
+      key: 'charge',
+      label: '充电时段',
+      count: chargeCount,
+      color: '#00D4AA',
+      bg: 'rgba(0,212,170,0.1)',
+      border: 'rgba(0,212,170,0.2)',
+      icon: <ExperimentOutlined />,
+    },
+    {
+      key: 'discharge',
+      label: '放电时段',
+      count: dischargeCount,
+      color: '#FF4D4F',
+      bg: 'rgba(255,77,79,0.1)',
+      border: 'rgba(255,77,79,0.2)',
+      icon: <ThunderboltOutlined />,
+    },
+    {
+      key: 'hold',
+      label: '待机时段',
+      count: 24 - chargeCount - dischargeCount,
+      color: '#667EEA',
+      bg: 'rgba(102,126,234,0.1)',
+      border: 'rgba(102,126,234,0.2)',
+      icon: <PauseCircleOutlined />,
+    },
+  ];
 
-  const columns = [
-    { title: '时段', dataIndex: 'hour', key: 'hour', width: 70 },
-    { title: '推荐动作', key: 'rec', width: 130, render: (_: unknown, r: ForecastPoint) => {
-      const rec = RECOMMENDATIONS[r.recommendation];
-      return <Tag style={{ background: rec.bg, color: rec.color, border: `1px solid ${rec.border}`, fontSize: 11 }}>{rec.text}</Tag>;
-    }},
-    { title: '电价(元)', dataIndex: 'price', key: 'price', render: (p: number) => `¥${p.toFixed(4)}` },
-    { title: '预测负荷', dataIndex: 'load', key: 'load', render: (l: number) => `${(l/1000).toFixed(1)} MW` },
-    { title: '置信度', dataIndex: 'confidence', key: 'confidence', render: (c: number) => <Progress percent={Math.round(c*100)} size="small" strokeColor="#667EEA" showInfo={false} /> },
-    { title: '决策依据', dataIndex: 'reason', key: 'reason', ellipsis: true },
+  // ─── Table columns ─────────────────────────────────────────────────────────
+  const tableColumns = [
+    {
+      title: '时段',
+      dataIndex: 'hour',
+      key: 'hour',
+      width: 70,
+      render: (h: string) => <span style={{ color: '#fff', fontWeight: 500 }}>{h}</span>,
+    },
+    {
+      title: '推荐动作',
+      dataIndex: 'recommendation',
+      key: 'recommendation',
+      width: 130,
+      render: (rec: 'charge' | 'discharge' | 'hold') => {
+        const r = REC[rec];
+        return (
+          <Tag
+            style={{ background: r.bg, color: r.color, border: `1px solid ${r.border}`, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}
+          >
+            {r.icon} {r.text}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: '电价',
+      dataIndex: 'price',
+      key: 'price',
+      width: 100,
+      render: (p: number) => (
+        <span style={{ color: parseFloat(String(p)) > 1 ? '#FF4D4F' : parseFloat(String(p)) < 0.4 ? '#00D4AA' : '#FF9500' }}>
+          ¥{parseFloat(String(p)).toFixed(3)}
+        </span>
+      ),
+    },
+    {
+      title: '预测负荷',
+      dataIndex: 'load',
+      key: 'load',
+      width: 100,
+      render: (l: number) => `${(l / 1000).toFixed(2)} MW`,
+    },
+    {
+      title: '置信度',
+      dataIndex: 'confidence',
+      key: 'confidence',
+      width: 110,
+      render: (c: number) => (
+        <Progress
+          percent={Math.round(c * 100)}
+          size="small"
+          strokeColor={c > 0.85 ? '#00D4AA' : c > 0.75 ? '#FF9500' : '#FF4D4F'}
+          trailColor="rgba(255,255,255,0.06)"
+          showInfo={false}
+        />
+      ),
+    },
+    {
+      title: '决策依据',
+      dataIndex: 'reason',
+      key: 'reason',
+      ellipsis: true,
+      render: (r: string) => <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{r}</span>,
+    },
   ];
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 24, fontSize: 20, fontWeight: 500, color: 'white' }}>🤖 AI 预测中心</h2>
-
-      {/* Station Selector + Stats */}
-      <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-        <Col xs={24} lg={16}>
-          <Card size="small" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}>
-            <Space wrap>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>选择电站：</span>
-              <Select value={stationId} onChange={setStationId} style={{ width: 200 }}
-                options={[
-                  { value: 'station-001', label: '苏州工业园光伏电站' },
-                  { value: 'station-002', label: '无锡储能电站' },
-                  { value: 'station-003', label: '杭州光储一体化' },
-                ]}
-              />
-              <Tag icon="🔄" style={{ background: 'rgba(102,126,234,0.15)', color: '#667EEA', border: 'none' }}>
-                模型: LightGBM v2.1 · 更新于 {new Date().toLocaleTimeString('zh-CN')}
-              </Tag>
-            </Space>
-          </Card>
-        </Col>
-        <Col xs={12} lg={2}>
-          <Card size="small" style={{ background: 'rgba(102,126,234,0.1)', border: '1px solid rgba(102,126,234,0.2)', textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#667EEA' }}>{confidenceAvg}%</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>平均置信度</div>
-          </Card>
-        </Col>
-        <Col xs={12} lg={3}>
-          <Card size="small" style={{ background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.2)', textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#00D4AA' }}>{chargeCount}次</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>建议充电</div>
-          </Card>
-        </Col>
-        <Col xs={12} lg={3}>
-          <Card size="small" style={{ background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.2)', textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#FF4D4F' }}>{dischargeCount}次</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>建议放电</div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Charts */}
-      <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-        <Col xs={24} lg={12}>
-          <Card
-            title="⚡ 48小时负荷预测"
-            extra={<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>置信区间 ±12%</span>}
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
-          >
-            <ReactECharts option={loadOption} style={{ height: 280 }} />
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title="💰 48小时电价预测"
-            extra={<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>置信区间 ±18%</span>}
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
-          >
-            <ReactECharts option={priceOption} style={{ height: 280 }} />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Dispatch Recommendations Table */}
-      <Card
-        title="📋 智能调度建议（未来24小时）"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
-      >
-        <div style={{ overflowX: 'auto' }}>
-          <Table
-            dataSource={futureForecast}
-            columns={columns}
-            rowKey="timestamp"
-            pagination={{ pageSize: 12, size: 'small' }}
-            scroll={{ x: 800 }}
-            size="small"
-            loading={loading}
-          />
+    <div style={{ padding: '0 16px 16px' }}>
+      {/* ─── Header ────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: '#fff' }}>🤖 AI 预测中心</h2>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+            LSTM 神经网络 · 48小时滚动预测 · 模型自学习优化
+          </p>
         </div>
-      </Card>
+        <Button
+          icon={<ReloadOutlined spin={loading} />}
+          onClick={loadData}
+          loading={loading}
+          style={{ background: 'rgba(102,126,234,0.15)', color: '#667EEA', border: '1px solid rgba(102,126,234,0.25)' }}
+        >
+          重新预测
+        </Button>
+      </div>
+
+      {error && (
+        <Alert
+          message={`预测失败: ${error}`}
+          type="error"
+          showIcon
+          style={{ marginBottom: 12 }}
+          closable
+          onClose={() => setError(null)}
+        />
+      )}
+
+      {/* ─── Stats row ─────────────────────────────────────────────────────── */}
+      <Row gutter={[10, 10]} style={{ marginBottom: 14 }}>
+        {[
+          { label: '平均置信度', value: `${avgConfidence}%`, color: '#667EEA', icon: '🎯' },
+          { label: '平均负荷', value: `${(avgLoad / 1000).toFixed(1)} MW`, color: '#667EEA', icon: '⚡' },
+          { label: '平均电价', value: `¥${avgPrice.toFixed(3)}`, color: '#FF9500', icon: '💰' },
+          { label: '建议充电', value: `${chargeCount}次`, color: '#00D4AA', icon: '🔋' },
+          { label: '建议放电', value: `${dischargeCount}次`, color: '#FF4D4F', icon: '⚡' },
+        ].map(stat => (
+          <Col xs={12} sm={8} md={5} key={stat.label}>
+            <Card
+              size="small"
+              style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${stat.color}22`, textAlign: 'center' }}
+              bodyStyle={{ padding: '12px 8px' }}
+            >
+              <div style={{ fontSize: 20, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                {stat.icon} {stat.label}
+              </div>
+            </Card>
+          </Col>
+        ))}
+        <Col xs={24} sm={8} md={4}>
+          <Card
+            size="small"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)', textAlign: 'center' }}
+            bodyStyle={{ padding: '12px 8px' }}
+          >
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{lastUpdated || '--:--:--'}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>上次更新</div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ─── Charts ───────────────────────────────────────────────────────── */}
+      {loading && display.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <Spin size="large" />
+          <div style={{ marginTop: 16, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+            LSTM 模型推理中，首次请求约需 10 秒...
+          </div>
+        </div>
+      ) : (
+        <>
+          <Row gutter={[10, 10]} style={{ marginBottom: 14 }}>
+            <Col xs={24} lg={12}>
+              <Card
+                title={<><span style={{ fontSize: 14 }}>⚡ 48小时负荷预测</span><span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 400, marginLeft: 8 }}>置信区间 ±12%</span></>}
+                extra={<Tag style={{ background: 'rgba(102,126,234,0.15)', color: '#667EEA', border: 'none', fontSize: 11 }}>LSTM</Tag>}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
+                bodyStyle={{ padding: '12px 12px 8px' }}
+              >
+                <ReactECharts option={loadOption} style={{ height: 260 }} />
+              </Card>
+            </Col>
+            <Col xs={24} lg={12}>
+              <Card
+                title={<><span style={{ fontSize: 14 }}>💰 48小时电价预测</span><span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 400, marginLeft: 8 }}>置信区间 ±18%</span></>}
+                extra={<Tag style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500', border: 'none', fontSize: 11 }}>LSTM</Tag>}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,149,0,0.12)' }}
+                bodyStyle={{ padding: '12px 12px 8px' }}
+              >
+                <ReactECharts option={priceOption} style={{ height: 260 }} />
+              </Card>
+            </Col>
+          </Row>
+
+          {/* ─── Dispatch summary cards ────────────────────────────────────── */}
+          <Row gutter={[10, 10]} style={{ marginBottom: 14 }}>
+            {dispatchSummary.map(s => (
+              <Col xs={8} key={s.key}>
+                <Card
+                  size="small"
+                  style={{ background: s.bg, border: `1px solid ${s.border}`, textAlign: 'center' }}
+                  bodyStyle={{ padding: '10px 8px' }}
+                >
+                  <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.count}次</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+                    {s.icon} {s.label}
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          {/* ─── Dispatch table ────────────────────────────────────────────── */}
+          <Card
+            title="📋 智能调度建议（未来24小时）"
+            extra={<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>基于负荷 + 电价联合预测</span>}
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
+            bodyStyle={{ padding: 0 }}
+          >
+            <Table
+              dataSource={display}
+              columns={tableColumns}
+              rowKey="timestamp"
+              pagination={{ pageSize: 12, size: 'small', showSizeChanger: false }}
+              scroll={{ x: 800 }}
+              size="small"
+              loading={loading}
+              rowClassName={(_, index) => index % 2 === 0 ? 'table-row-even' : ''}
+            />
+          </Card>
+        </>
+      )}
     </div>
   );
 }

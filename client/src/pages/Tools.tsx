@@ -47,13 +47,13 @@ function ROICalculator() {
 
   const chartOption = {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,15,35,0.9)', borderColor: 'rgba(102,126,234,0.3)', textStyle: { color: 'white' } },
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,0.95)', borderColor: 'rgba(102,126,234,0.3)', textStyle: { color: '#1a1a2e' } },
     legend: { data: ['累计收益', '累计成本', '累计利润'], bottom: 0, textStyle: { color: 'rgba(255,255,255,0.6)' } },
     grid: { top: 10, right: 10, bottom: 40, left: 55 },
     xAxis: { type: 'category', data: yearlyData.map(d => `第${d.year}年`), axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }, axisLabel: { color: 'rgba(255,255,255,0.5)' } },
     yAxis: { type: 'value', name: '万元', axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }, axisLabel: { color: 'rgba(255,255,255,0.5)', formatter: (v: number) => (v / 10000).toFixed(0) }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
     series: [
-      { name: '累计收益', type: 'bar', stack: 'total', data: yearlyData.map(d => parseFloat((d.cumulative / 10000).toFixed(2))), itemStyle: { color: '#00D4AA' } },
+      { name: '累计收益', type: 'bar', stack: 'total', data: yearlyData.map(d => parseFloat((d.cumulative / 10000).toFixed(2))), itemStyle: { color: '#0A0E1A' } },
       { name: '累计成本', stack: 'total', type: 'bar', data: yearlyData.map(d => parseFloat((-d.cost / 10000).toFixed(2))), itemStyle: { color: 'rgba(255,77,79,0.6)' } },
       { name: '累计利润', type: 'line', data: yearlyData.map(d => parseFloat((d.profit / 10000).toFixed(2))), itemStyle: { color: '#FFD700' }, lineStyle: { color: '#FFD700' } },
     ],
@@ -95,8 +95,8 @@ function ROICalculator() {
         </Col>
         <Col xs={24} lg={12}>
           <Row gutter={[8, 8]}>
-            <Col span={12}><Card size="small" style={{ background: 'rgba(255,200,0,0.08)', border: '1px solid rgba(255,200,0,0.2)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>💰 总投资</div><div style={{ fontSize: 20, fontWeight: 700, color: '#FFB400' }}>¥{formatK(pvCost)}</div><div style={{ fontSize: 11, color: '#00D4AA' }}>补贴 ¥{formatK(totalSubsidy)}</div></Card></Col>
-            <Col span={12}><Card size="small" style={{ background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.2)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>📆 回本周期</div><div style={{ fontSize: 20, fontWeight: 700, color: '#00D4AA' }}>{payback > 0 ? `${payback.toFixed(1)}年` : '—'}</div></Card></Col>
+            <Col span={12}><Card size="small" style={{ background: 'rgba(255,200,0,0.08)', border: '1px solid rgba(255,200,0,0.2)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>💰 总投资</div><div style={{ fontSize: 20, fontWeight: 700, color: '#FFB400' }}>¥{formatK(pvCost)}</div><div style={{ fontSize: 11, color: '#0A0E1A' }}>补贴 ¥{formatK(totalSubsidy)}</div></Card></Col>
+            <Col span={12}><Card size="small" style={{ background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.2)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>📆 回本周期</div><div style={{ fontSize: 20, fontWeight: 700, color: '#0A0E1A' }}>{payback > 0 ? `${payback.toFixed(1)}年` : '—'}</div></Card></Col>
             <Col span={12}><Card size="small" style={{ background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.2)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>📈 IRR</div><div style={{ fontSize: 20, fontWeight: 700, color: '#667EEA' }}>{rate > 0 ? `${rate.toFixed(1)}%` : '—'}</div></Card></Col>
             <Col span={12}><Card size="small" style={{ background: 'rgba(255,77,79,0.06)', border: '1px solid rgba(255,77,79,0.15)', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>💹 10年NPV</div><div style={{ fontSize: 20, fontWeight: 700, color: '#FF4D4F' }}>{npv10y > 0 ? `¥${formatK(npv10y)}` : '—'}</div></Card></Col>
           </Row>
@@ -105,10 +105,10 @@ function ROICalculator() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'rgba(255,255,255,0.6)' }}>自用节省电费</span><span style={{ color: '#FFD700' }}>¥{formatK(selfConsume * elecPrice)}/年</span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'rgba(255,255,255,0.6)' }}>余电上网收益</span><span style={{ color: '#9B59B6' }}>¥{formatK(feedIn * fit)}/年</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'rgba(255,255,255,0.6)' }}>峰谷套利收益</span><span style={{ color: '#00D4AA' }}>¥{formatK(storageBenefit)}/年</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'rgba(255,255,255,0.6)' }}>峰谷套利收益</span><span style={{ color: '#0A0E1A' }}>¥{formatK(storageBenefit)}/年</span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'rgba(255,255,255,0.6)' }}>充电服务收益</span><span style={{ color: '#38A169' }}>¥{formatK(evBenefit)}/年</span></div>
               <Divider style={{ margin: '8px 0', borderColor: 'rgba(255,255,255,0.06)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700 }}><span style={{ color: 'white' }}>年均总收益</span><span style={{ color: '#00D4AA' }}>¥{formatK(annualRevenue)}/年</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700 }}><span style={{ color: '#1a1a2e' }}>年均总收益</span><span style={{ color: '#0A0E1A' }}>¥{formatK(annualRevenue)}/年</span></div>
             </div>
           </Card>
         </Col>
@@ -143,7 +143,7 @@ function SystemConfigurator() {
 
   const roiData = [
     { label: '☀️ 光伏', value: `${recommendedPv} kW`, color: '#FFD700', detail: `屋顶可装 ${Math.floor(area * 0.6)}m²，年发电 ${(recommendedPv * peakHours / 1000).toFixed(0)}MWh` },
-    { label: '🔋 储能', value: `${recommendedStorage} kWh`, color: '#00D4AA', detail: `支持 ${(recommendedStorage / peakLoad * 100).toFixed(0)}% 峰值负荷覆盖` },
+    { label: '🔋 储能', value: `${recommendedStorage} kWh`, color: '#0A0E1A', detail: `支持 ${(recommendedStorage / peakLoad * 100).toFixed(0)}% 峰值负荷覆盖` },
     { label: '🚗 充电桩', value: `${recommendedEv} 台`, color: '#38A169', detail: `满足 ${Math.round(evCount * 0.6)} 辆电动车日常充电` },
   ];
 
@@ -198,7 +198,7 @@ function SystemConfigurator() {
                 <div style={{ background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.2)', borderRadius: 10, padding: '14px 16px', marginTop: 4 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>💡 预计年电费节省</span>
-                    <span style={{ fontSize: 20, fontWeight: 700, color: '#00D4AA' }}>¥{(annualSaving / 10000).toFixed(0)}万</span>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#0A0E1A' }}>¥{(annualSaving / 10000).toFixed(0)}万</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>自发自用率提升至 {Math.round(selfConsumeRate * 100)}%</div>
                 </div>
@@ -218,15 +218,15 @@ function SystemConfigurator() {
             return peakLoad * 0.3;
           });
           const solar = hours.map(h => h >= 6 && h <= 18 ? recommendedPv * Math.sin((h - 6) / 12 * Math.PI) * (0.8 + Math.random() * 0.2) : 0);
+          const storageBenefitCheck = () => recommendedStorage * 0.1;
           const storage = hours.map(h => {
             if (h >= 9 && h <= 15 && solar[h] > load[h]) return Math.min(storageBenefitCheck(), (solar[h] - load[h]));
             if ((h >= 18 && h <= 23) && load[h] > solar[h]) return -(load[h] - solar[h]) * 0.5;
             return 0;
           });
-          const storageBenefitCheck = () => recommendedStorage * 0.1;
           const chartOption = {
             backgroundColor: 'transparent',
-            tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,15,35,0.9)', textStyle: { color: 'white' } },
+            tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,0.95)', textStyle: { color: '#1a1a2e' } },
             legend: { data: ['负载', '光伏', '储能'], bottom: 0, textStyle: { color: 'rgba(255,255,255,0.6)' } },
             grid: { top: 10, right: 10, bottom: 40, left: 50 },
             xAxis: { type: 'category', data: hours.map(h => `${h}:00`), axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }, axisLabel: { color: 'rgba(255,255,255,0.5)', interval: 3 } },
@@ -234,7 +234,7 @@ function SystemConfigurator() {
             series: [
               { name: '负载', type: 'line', smooth: true, data: load.map(v => parseFloat(v.toFixed(1))), itemStyle: { color: '#9B59B6' }, areaStyle: { color: 'rgba(155,89,182,0.1)' } },
               { name: '光伏', type: 'line', smooth: true, data: solar.map(v => parseFloat(v.toFixed(1))), itemStyle: { color: '#FFD700' } },
-              { name: '储能', type: 'line', smooth: true, data: storage.map(v => parseFloat(v.toFixed(1))), itemStyle: { color: '#00D4AA' } },
+              { name: '储能', type: 'line', smooth: true, data: storage.map(v => parseFloat(v.toFixed(1))), itemStyle: { color: '#0A0E1A' } },
             ],
           };
           return <ReactECharts option={chartOption} style={{ height: 220 }} />;
@@ -262,7 +262,7 @@ function RevenueAnalyzer() {
   const carbonRevenue = carbon * 100; // CNY/ton
 
   const items = [
-    { label: '⚡ 峰谷套利收益', value: peakValley, color: '#00D4AA', detail: `${storage} kWh × ${cycles}次 × ${(peakPrice - offPeakPrice).toFixed(2)}元/kWh × 365天` },
+    { label: '⚡ 峰谷套利收益', value: peakValley, color: '#0A0E1A', detail: `${storage} kWh × ${cycles}次 × ${(peakPrice - offPeakPrice).toFixed(2)}元/kWh × 365天` },
     { label: '🏭 VPP容量费', value: vppCapacity * vppCapacityPayment, color: '#667EEA', detail: `${vppCapacity} kW × ${vppCapacityPayment}元/kW/年` },
     { label: '📊 VPP电量费', value: vppCapacity * vppEnergyPayment * 365 * 0.1, color: '#FF9500', detail: `${vppCapacity} kW × ${vppEnergyPayment}元/kWh × 响应10%时间` },
     { label: '🚗 充电服务费', value: evRevenue, color: '#38A169', detail: `${evCharger} kW × 60%利用率 × 2000h × 0.8元/kWh服务费` },
@@ -273,7 +273,7 @@ function RevenueAnalyzer() {
 
   const chartOption = {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'item', backgroundColor: 'rgba(15,15,35,0.9)', textStyle: { color: 'white' } },
+    tooltip: { trigger: 'item', backgroundColor: 'rgba(255,255,255,0.95)', textStyle: { color: '#1a1a2e' } },
     legend: { orient: 'vertical', right: 10, top: 'center', textStyle: { color: 'rgba(255,255,255,0.6)' } },
     series: [{
       type: 'pie', radius: ['40%', '70%'],
@@ -352,7 +352,7 @@ export default function Tools() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 500, color: 'white', marginBottom: 4 }}>🔧 工具箱</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 500, color: '#1a1a2e', marginBottom: 4 }}>🔧 工具箱</h2>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>光储充项目分析工具集</p>
       </div>
 
@@ -360,7 +360,7 @@ export default function Tools() {
         {TOOLS.map(t => (
           <button key={t.key} onClick={() => setActive(t.key)} style={{
             padding: '10px 20px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14,
-            background: active === t.key ? '#00D4AA' : 'rgba(255,255,255,0.06)',
+            background: active === t.key ? '#4F7FE8' : 'rgba(255,255,255,0.06)',
             color: active === t.key ? '#0A0E1A' : 'rgba(255,255,255,0.6)',
             fontWeight: active === t.key ? 700 : 400,
             transition: 'all 0.2s',

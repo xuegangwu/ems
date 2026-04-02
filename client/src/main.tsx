@@ -27,27 +27,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             colorBorderSecondary: 'rgba(102,126,234,0.12)',
           },
           Table: {
-            colorBgContainer: 'rgba(255,255,255,0.04)',
+            colorBgContainer: 'transparent',
             colorBorderSecondary: 'rgba(102,126,234,0.12)',
             headerBg: 'rgba(102,126,234,0.1)',
             rowHoverBg: 'rgba(102,126,234,0.08)',
           },
-          Menu: {
-            colorBgContainer: 'transparent',
-          },
-          Modal: {
-            colorBgElevated: '#1A1040',
-            colorBgContainer: 'rgba(255,255,255,0.04)',
-          },
-          Select: {
-            colorBgContainer: 'rgba(255,255,255,0.06)',
-          },
-          Input: {
-            colorBgContainer: 'rgba(255,255,255,0.06)',
-          },
-          DatePicker: {
-            colorBgContainer: 'rgba(255,255,255,0.06)',
-          },
+          Menu: { colorBgContainer: 'transparent' },
+          Modal: { colorBgElevated: '#1A1040', colorBgContainer: 'rgba(255,255,255,0.04)' },
+          Select: { colorBgContainer: 'rgba(255,255,255,0.06)' },
+          Input: { colorBgContainer: 'rgba(255,255,255,0.06)' },
+          DatePicker: { colorBgContainer: 'rgba(255,255,255,0.06)' },
         },
       }}
     >

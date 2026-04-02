@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, Row, Col, Select, Tag, Statistic, Space, Table, Badge } from 'antd';
 import type { PowerStation } from '@/types';
 
-interface IoTDevice {
+
+export interface IoTDevice {
   id: string; name: string;
   type: 'meter' | 'inverter' | 'battery_bms' | 'sensor' | 'gateway' | 'ev_charger';
   status: 'online' | 'offline' | 'warning' | 'charging' | 'idle';
@@ -13,7 +14,7 @@ interface VPPStatus {
   marketStatus: 'idle' | 'responding' | 'bidding'; currentPrice: number;
   responseWindow: string; signedCapacity: number; monthlyRevenue: number; isVPPEnabled: boolean;
 }
-interface StationDigitalTwin {
+export interface StationDigitalTwin {
   station: PowerStation; devices: IoTDevice[];
   realTime: { generation: number; consumption: number; storage: number; storageSoc: number; gridExport: number; gridImport: number; efficiency: number; temperature: number; evCharging: number; };
   vpp?: VPPStatus;
@@ -242,6 +243,11 @@ export default function DigitalTwin() {
       </Row>
 
       <div style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+            ⚡ 能量流向图
+          </span>
+        </div>
         <EnergyFlowDiagram twin={twin} />
       </div>
 

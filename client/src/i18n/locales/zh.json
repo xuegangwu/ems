@@ -47,7 +47,7 @@
   },
   "platform": {
     "label": "数字孪生平台",
-    "title": "EnOS — 园区能源一站式管理",
+    "title": "EnOS — 园区综合能源管理",
     "desc": "EnOS (Energy Operating System) 是 Solaripple 打造的工业能源数字底座，将物理世界的能源设备完整映射到数字空间。",
     "features": [
       "实时 3D 可视化园区全景，设备状态一目了然",

@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { authController } from '../controllers/authController.js';
+import { login, getProfile, listUsers, changePassword, authMiddleware, requireRole } from '../controllers/authController.js';
 
-export const authRoutes = Router();
+const router = Router();
 
-authRoutes.post('/login', authController.login);
-authRoutes.post('/register', authController.register);
-authRoutes.get('/profile', authController.getProfile);
+router.post('/login', login);
+router.get('/profile', authMiddleware, getProfile);
+router.put('/password', authMiddleware, changePassword);
+router.get('/users', authMiddleware, requireRole('admin'), listUsers);
+
+export { router as authRoutes };

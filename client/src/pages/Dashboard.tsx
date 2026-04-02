@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col } from 'antd';
+import { Row, Col, Select, Badge } from 'antd';
 import { ThunderboltOutlined, RiseOutlined, FallOutlined, DollarOutlined, CloudOutlined, SwapOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import api from '../services/api';
@@ -79,18 +79,101 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-export default function Dashboard() {
-  const [optimal, setOptimal] = useState<{ action: { text: string; reason: string; color: string }; bestCharge: Array<{ time: string; price: number }>; bestDischarge: Array<{ time: string; price: number }> } | null>(null);
+interface BillData { solarKwh: number; batteryKwh: number; gridKwh: number; carbonTon: number; totalCost: number; solarSaving: number; }
 
+export default function Dashboard() {
+  const [selectedStation, setSelectedStation] = useState('station-001');
+  const [refreshTime, setRefreshTime] = useState(new Date());
+  const [optimal, setOptimal] = useState<{ action: { text: string; reason: string; color: string }; bestCharge: Array<{ time: string; price: number }>; bestDischarge: Array<{ time: string; price: number }> } | null>(null);
+  const [bill, setBill] = useState<BillData | null>(null);
+  const [realtime, setRealtime] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+
+  // Fetch MQTT realtime + alerts on mount
   useEffect(() => {
+    Promise.all([
+      fetch('/api/mqtt/realtime').then(r => r.json()).catch(() => null),
+      fetch('/api/mqtt/status').then(r => r.json()).catch(() => null),
+    ]).then(([mqttData]) => {
+      if (mqttData && mqttData.stations) {
+        const stations = mqttData.stations;
+        setRealtime(stations);
+        const primary = stations.find((s: any) => s.id === selectedStation) || stations[0];
+        const latest = primary?.latest || {};
+        const solar = latest?.solarPowerKw || 0;
+        const gridImport = latest?.gridPowerKw > 0 ? latest.gridPowerKw : 0;
+        const soc = latest?.batterySoc || 50;
+        // Estimate daily from current power (assume 8h effective generation)
+        const dayHours = 8;
+        const solarKwh = Math.round(Math.max(0, solar) * dayHours * 0.8);
+        const gridKwh = Math.round(gridImport * 12); // 12h of current grid usage
+        const batteryKwh = Math.round(soc / 100 * 200);
+        const carbonTon = parseFloat((solarKwh * 0.0004).toFixed(2));
+        const gridCost = gridKwh * 0.65;
+        const solarSaving = solarKwh * 0.80;
+        setBill({
+          solarKwh, batteryKwh, gridKwh, carbonTon,
+          totalCost: Math.round(gridCost - solarSaving * 0.3),
+          solarSaving: Math.round(solarSaving),
+        });
+      }
+      if (mqttData && mqttData.length > 0) {
+        const computedAlerts: any[] = [];
+        mqttData.forEach((s: any) => {
+          if (s.battery?.soc < 20) computedAlerts.push({ id: s.id+'-soc', level: 'warning', message: s.name + ' 电池SOC过低: ' + s.battery.soc + '%' });
+          if (s.battery?.temp > 45) computedAlerts.push({ id: s.id+'-temp', level: 'critical', message: s.name + ' 电池温度异常: ' + s.battery.temp + '°C' });
+          if (s.grid?.importKw > 100) computedAlerts.push({ id: s.id+'-grid', level: 'info', message: s.name + ' 电网负荷偏高: ' + s.grid.importKw + 'kW' });
+        });
+        setAlerts(computedAlerts.slice(0, 5));
+      }
+    });
+
+    // Fetch optimal dispatch
     api.get('/electricity/prices/half-hourly?region=华东电网').then(r => {
       if (r.data.success) setOptimal(r.data.data.optimal);
     }).catch(() => {});
-  }, []);
+
+    // Auto-refresh every 15s
+    const timer = setInterval(() => {
+      fetch('/api/mqtt/realtime').then(r => r.json()).then(d => {
+        if (d && d.stations) {
+          const stations = d.stations;
+          setRealtime(stations);
+          setRefreshTime(new Date());
+          const primary = stations.find((s: any) => s.id === selectedStation) || stations[0];
+          const latest = primary?.latest || {};
+          const solar = latest?.solarPowerKw || 0;
+          const gridImport = latest?.gridPowerKw > 0 ? latest.gridPowerKw : 0;
+          const soc = latest?.batterySoc || 50;
+          const solarKwh = Math.round(Math.max(0, solar) * 8 * 0.8);
+          const gridKwh = Math.round(gridImport * 12);
+          const batteryKwh = Math.round(soc / 100 * 200);
+          setBill({ solarKwh, batteryKwh, gridKwh, carbonTon: parseFloat((solarKwh * 0.0004).toFixed(2)), totalCost: Math.round(gridKwh * 0.65 - solarKwh * 0.80 * 0.3), solarSaving: Math.round(solarKwh * 0.80) });
+          const alerts: any[] = [];
+          d.forEach((s: any) => {
+            const lat = s.latest || {};
+            if (lat.batterySoc < 20) alerts.push({ id: s.id+'-soc', level: 'warning', message: s.name + ' 电池SOC过低: ' + lat.batterySoc + '%' });
+            if (lat.gridPowerKw > 100) alerts.push({ id: s.id+'-grid', level: 'info', message: s.name + ' 电网负荷偏高: ' + Math.round(lat.gridPowerKw) + 'kW' });
+          });
+          setAlerts(alerts.slice(0, 5));
+        }
+      }).catch(() => {});
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, [selectedStation]);
 
   return (
     <div>
-      <h2 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600, color: 'white' }}>总览</h2>
+      <h2 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600, color: 'white' }}>
+            总览
+            <Select value={selectedStation} onChange={v => setSelectedStation(v)}
+              style={{ marginLeft: 16, width: 180, fontSize: 12 }}
+              options={[{value:'station-001',label:'苏州工业园'},{value:'station-002',label:'杭州站'},{value:'station-003',label:'上海站'}]}
+            />
+            <Badge status="processing" style={{ marginLeft: 12 }} />
+            <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginLeft:4 }}>刷新于 {refreshTime.toLocaleTimeString()}</span>
+          </h2>
       <Row gutter={[12, 12]}>
         <Col xs={12} lg={4}>
           <StatCard title="总装机容量" value={12.8} suffix="MW" prefix={<ThunderboltOutlined style={{ color: '#667EEA', fontSize: 18 }} />} valueColor="#667EEA" />
@@ -111,6 +194,71 @@ export default function Dashboard() {
           <StatCard title="碳减排" value={285} suffix="吨" prefix={<CloudOutlined style={{ color: '#52c41a', fontSize: 18 }} />} valueColor="#52c41a" />
         </Col>
       </Row>
+
+      {/* ── Octopus-style 今日能源账单 (真实数据) ─────────────────────── */}
+      <Row gutter={[12, 12]} style={{ marginTop: 14 }}>
+        <Col xs={24}>
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(102,126,234,0.15)',
+            borderRadius: 14,
+            padding: '16px 20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>📋 今日能源账单</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+                  {new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'})} · {realtime[0]?.name || '苏州工业园'}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                {bill ? (
+                  <>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: bill.totalCost > 0 ? '#F87171' : '#34D399' }}>
+                      {bill.totalCost > 0 ? '+' : ''}¥{bill.totalCost.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#00D4AA' }}>光伏节省 ¥{bill.solarSaving} · 实时</div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)' }}>加载中...</div>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {(bill ? [
+                { icon: '☀️', label: '光伏发电', value: `${bill.solarKwh}kWh`, color: '#FFB020', bg: 'rgba(255,176,0,0.1)' },
+                { icon: '🔋', label: '储能(SOC)', value: `${bill.batteryKwh}kWh`, color: '#60A5FA', bg: 'rgba(96,165,250,0.1)' },
+                { icon: '⚡', label: '电网购电', value: `${bill.gridKwh}kWh`, color: '#F87171', bg: 'rgba(248,113,113,0.1)' },
+                { icon: '🌱', label: '碳减排', value: `${bill.carbonTon}t`, color: '#34D399', bg: 'rgba(52,211,153,0.1)' },
+              ] : [
+                { icon: '☀️', label: '光伏发电', value: '--kWh', color: '#FFB020', bg: 'rgba(255,176,0,0.1)' },
+                { icon: '🔋', label: '储能(SOC)', value: '--kWh', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)' },
+                { icon: '⚡', label: '电网购电', value: '--kWh', color: '#F87171', bg: 'rgba(248,113,113,0.1)' },
+                { icon: '🌱', label: '碳减排', value: '--t', color: '#34D399', bg: 'rgba(52,211,153,0.1)' },
+              ]).map(item => (
+                <div key={item.label} style={{ background: item.bg, borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 22 }}>{item.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{item.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: item.color }}>{item.value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {alerts.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {alerts.map((a: any) => (
+                  <div key={a.id} style={{ fontSize: 11, color: a.level === 'critical' ? '#EF4444' : a.level === 'warning' ? '#FBBF24' : '#60A5FA', background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '4px 10px', border: `1px solid ${a.level === 'critical' ? 'rgba(239,68,68,0.3)' : 'rgba(251,191,36,0.3)'}` }}>
+                    {a.level === 'critical' ? '🔴' : a.level === 'warning' ? '🟡' : '🔵'} {a.message?.slice(0, 40)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Col>
+      </Row>
+
+
 
       <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={14}>
