@@ -161,7 +161,7 @@ export default function AgentPipeline() {
       animateEdge('solar', 'price', '#F59E0B');
 
       // Run full 4-agent chain
-      const agentRes = await fetch('/api/agents/run', {
+      const agentRes = await fetch('/api/orchestrator/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ date: new Date().toISOString().split('T')[0] }),
