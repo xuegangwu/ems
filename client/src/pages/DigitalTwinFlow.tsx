@@ -42,6 +42,8 @@ const nodeTypes = { energy: EnergyNode };
 
 // ── Animated Data Flow Edge ────────────────────────────────────────────────
 
+const FLOW_ANIM = 'dashdraw 0.8s linear infinite';
+
 function buildEdges(data: Record<string, number>): Edge[] {
   const { solar = 0, battery = 0, grid = 0, load = 0 } = data;
   const marker = (color: string) => ({
@@ -57,7 +59,7 @@ function buildEdges(data: Record<string, number>): Edge[] {
     const toBat = Math.min(solar * 0.4, 150);
     edges.push({
       id: 'solar-battery', source: 'solar', target: 'battery',
-      animated: true, style: { stroke: '#FFB020', strokeWidth: sw(toBat) },
+      animated: true, style: { strokeDasharray: '8 4', animation: FLOW_ANIM, stroke: '#FFB020', strokeWidth: sw(toBat) },
       label: `${toBat.toFixed(0)}kW`,
       labelStyle: { fill: '#FFB020', fontSize: 11 },
       ...marker('#FFB020'),
@@ -69,7 +71,7 @@ function buildEdges(data: Record<string, number>): Edge[] {
     const toLoad = Math.min(solar * 0.6, load);
     edges.push({
       id: 'solar-load', source: 'solar', target: 'load',
-      animated: true, style: { stroke: '#34D399', strokeWidth: sw(toLoad) },
+      animated: true, style: { strokeDasharray: '8 4', animation: FLOW_ANIM, stroke: '#34D399', strokeWidth: sw(toLoad) },
       label: `${toLoad.toFixed(0)}kW`,
       labelStyle: { fill: '#34D399', fontSize: 11 },
       ...marker('#34D399'),
@@ -83,7 +85,7 @@ function buildEdges(data: Record<string, number>): Edge[] {
       // Discharging: battery → load
       edges.push({
         id: 'battery-load', source: 'battery', target: 'load',
-        animated: true, style: { stroke: '#60A5FA', strokeWidth: sw(absBat) },
+        animated: true, style: { strokeDasharray: '8 4', animation: FLOW_ANIM, stroke: '#60A5FA', strokeWidth: sw(absBat) },
         label: `${absBat.toFixed(0)}kW`,
         labelStyle: { fill: '#60A5FA', fontSize: 11 },
         ...marker('#60A5FA'),
@@ -94,7 +96,7 @@ function buildEdges(data: Record<string, number>): Edge[] {
       const chargeColor = solar > 50 ? '#FFB020' : '#F87171';
       edges.push({
         id: 'grid-battery', source: chargeSrc, target: 'battery',
-        animated: true, style: { stroke: chargeColor, strokeWidth: sw(absBat) },
+        animated: true, style: { strokeDasharray: '8 4', animation: FLOW_ANIM, stroke: chargeColor, strokeWidth: sw(absBat) },
         label: `${absBat.toFixed(0)}kW`,
         labelStyle: { fill: chargeColor, fontSize: 11 },
         ...marker(chargeColor),
@@ -109,7 +111,7 @@ function buildEdges(data: Record<string, number>): Edge[] {
       // Importing: grid → load
       edges.push({
         id: 'grid-load', source: 'grid', target: 'load',
-        animated: true, style: { stroke: '#F87171', strokeWidth: sw(absGrid) },
+        animated: true, style: { strokeDasharray: '8 4', animation: FLOW_ANIM, stroke: '#F87171', strokeWidth: sw(absGrid) },
         label: `${absGrid.toFixed(0)}kW`,
         labelStyle: { fill: '#F87171', fontSize: 11 },
         ...marker('#F87171'),
@@ -118,7 +120,8 @@ function buildEdges(data: Record<string, number>): Edge[] {
       // Exporting: load → grid (sell excess)
       edges.push({
         id: 'load-grid', source: 'load', target: 'grid',
-        animated: true, style: { stroke: '#F87171', strokeWidth: sw(absGrid), strokeDasharray: '5 3' },
+        animated: true,
+        style: { stroke: '#F87171', strokeWidth: sw(absGrid), strokeDasharray: '5 3', animation: 'dashdraw 0.6s linear infinite reverse' },
         label: `${absGrid.toFixed(0)}kW 售电`,
         labelStyle: { fill: '#F87171', fontSize: 11 },
         ...marker('#F87171'),
@@ -169,19 +172,24 @@ export default function DigitalTwinFlow() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [fetchData]);
 
-  // Demo mode: simulate daytime energy flow
+  // Demo mode: simulate daytime energy flow with smooth sine-wave animation
   useEffect(() => {
     if (!demoMode) return;
-    const demo = () => ({
-      solar: 320 + Math.sin(Date.now() / 3000) * 80,
-      battery: -60 + Math.sin(Date.now() / 4000) * 20, // negative = charging
-      grid: -20 + Math.sin(Date.now() / 5000) * 10,   // negative = exporting
-      load: 180 + Math.sin(Date.now() / 4500) * 30,
-      soc: 65 + Math.sin(Date.now() / 8000) * 10,
-    });
-    setRealtime(demo());
-    const id = setInterval(() => setRealtime(demo()), 2000);
-    return () => clearInterval(id);
+    let running = true;
+    const tick = () => {
+      if (!running) return;
+      const t = Date.now();
+      setRealtime({
+        solar: 320 + Math.sin(t / 3000) * 80,
+        battery: -60 + Math.sin(t / 4000) * 20,
+        grid: -20 + Math.sin(t / 5000) * 10,
+        load: 180 + Math.sin(t / 4500) * 30,
+        soc: 65 + Math.sin(t / 8000) * 10,
+      });
+    };
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => { running = false; clearInterval(id); };
   }, [demoMode]);
 
   // Build nodes from realtime data
