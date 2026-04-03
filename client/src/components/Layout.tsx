@@ -199,18 +199,19 @@ export default function Layout() {
 
       {/* Main */}
       <div className="layout-main">
-        {/* Fixed icon sidebar */}
+        {/* Sidebar */}
         <nav className="sidebar-nav">
           {Object.entries(groups).map(([group, items]) => (
             <React.Fragment key={group}>
+              <div className="sidebar-group-label">{group}</div>
               {items.map(item => (
                 <div
                   key={item.key}
                   className={`sidebar-nav-item${isActive(item.key) ? ' active' : ''}`}
                   onClick={() => handleNav(item.key)}
-                  title={item.label}
                 >
                   <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-label">{item.label}</span>
                   {item.badge === 'alert' && <span className="badge" />}
                 </div>
               ))}
