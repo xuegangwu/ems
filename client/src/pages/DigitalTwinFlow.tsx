@@ -139,7 +139,7 @@ const STATIONS = [
 export default function DigitalTwinFlow() {
   const [stationId, setStationId] = useState('station-001');
   const [realtime, setRealtime] = useState({ solar: 0, battery: 0, grid: 0, load: 0, soc: 50 });
-  const [demoMode, setDemoMode] = useState(false);
+  const [demoMode, setDemoMode] = useState(true);
   const [legend] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -242,7 +242,7 @@ export default function DigitalTwinFlow() {
         <div>
           <h2 style={{ margin: 0, color: '#fff', fontSize: 18 }}>⚡ 能源数字孪生</h2>
           <p style={{ margin: '4px 0 0', color: '#6B7280', fontSize: 13 }}>
-            实时能量流可视化 · {STATIONS.find(s => s.id === stationId)?.name}
+            实时能量流可视化{demoMode ? ' (模拟演示)' : ' · 实时数据'} · {STATIONS.find(s => s.id === stationId)?.name}
           </p>
         </div>
         <Space>
@@ -258,9 +258,9 @@ export default function DigitalTwinFlow() {
               fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
-            {demoMode ? '🌙 退出演示' : '▶ 演示模式'}
+            {demoMode ? '🔴 关闭模拟' : '▶ 开启模拟'}
           </button>
-          {demoMode && <Badge status="warning" />}
+          {demoMode && <Badge status="error" />}
           {!demoMode && <Badge status="processing" />}
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>5s刷新</span>
         </Space>
