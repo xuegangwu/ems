@@ -10,26 +10,27 @@ import { Card, Row, Col, Select, Statistic, Space, Badge } from 'antd'
 // ── Energy Flow Node ─────────────────────────────────────────────────────────
 interface EnergyNodeData {
   label: string; icon: string; unit: string;
-  value: number; status: 'online' | 'offline' | 'warn';
+  value: number; status: 'online' | 'offline' | 'warn' | 'charging' | 'idle';
   color: string; description: string;
   [key: string]: unknown;
 }
 
 function EnergyNode({ data }: { data: EnergyNodeData }) {
-  const statusColor = { online: '#00D4AA', offline: '#F87171', warn: '#FBBF24' }[data.status] || '#00D4AA';
+  const sc: Record<string, string> = { online: '#00D4AA', offline: '#F87171', warn: '#FBBF24', charging: '#60A5FA', idle: '#9CA3AF' };
+  const color = sc[data.status] || '#00D4AA';
   return (
     <div style={{
       background: 'rgba(26,16,64,0.95)',
-      border: `1.5px solid ${statusColor}55`,
+      border: `1.5px solid ${color}55`,
       borderRadius: 14,
       padding: '12px 18px',
       minWidth: 130,
       textAlign: 'center',
-      boxShadow: `0 0 20px ${statusColor}22`,
+      boxShadow: `0 0 20px ${color}22`,
     }}>
       <div style={{ fontSize: 28 }}>{data.icon}</div>
       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{data.label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: statusColor, marginTop: 2 }}>
+      <div style={{ fontSize: 20, fontWeight: 700, color, marginTop: 2 }}>
         {data.value.toFixed(1)} <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{data.unit}</span>
       </div>
       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{data.description}</div>
@@ -49,48 +50,80 @@ function buildEdges(data: Record<string, number>): Edge[] {
 
   const edges: Edge[] = [];
 
-  // Solar → Battery (excess goes to battery)
-  if (solar > 10) {
+  const sw = (v: number) => Math.max(2, Math.min(8, v / 60));
+
+  // Solar → Battery (charging battery with solar)
+  if (solar > 20) {
+    const toBat = Math.min(solar * 0.4, 150);
     edges.push({
       id: 'solar-battery', source: 'solar', target: 'battery',
-      animated: true, style: { stroke: '#FFB020', strokeWidth: Math.max(2, solar / 120) },
-      label: `${solar.toFixed(0)}kW`,
+      animated: true, style: { stroke: '#FFB020', strokeWidth: sw(toBat) },
+      label: `${toBat.toFixed(0)}kW`,
       labelStyle: { fill: '#FFB020', fontSize: 11 },
       ...marker('#FFB020'),
     });
   }
 
-  // Solar → Load
+  // Solar → Load (direct consumption)
   if (solar > 0 && load > 0) {
+    const toLoad = Math.min(solar * 0.6, load);
     edges.push({
       id: 'solar-load', source: 'solar', target: 'load',
-      animated: true, style: { stroke: '#34D399', strokeWidth: Math.max(2, Math.min(solar, load) / 80) },
-      label: `${Math.min(solar, load).toFixed(0)}kW`,
+      animated: true, style: { stroke: '#34D399', strokeWidth: sw(toLoad) },
+      label: `${toLoad.toFixed(0)}kW`,
       labelStyle: { fill: '#34D399', fontSize: 11 },
       ...marker('#34D399'),
     });
   }
 
-  // Battery → Load
-  if (battery > 0 && load > 0) {
-    edges.push({
-      id: 'battery-load', source: 'battery', target: 'load',
-      animated: true, style: { stroke: '#60A5FA', strokeWidth: Math.max(2, battery / 60) },
-      label: `${battery.toFixed(0)}kW`,
-      labelStyle: { fill: '#60A5FA', fontSize: 11 },
-      ...marker('#60A5FA'),
-    });
+  // Battery ↔ Load (discharge when positive, charge when negative)
+  const absBat = Math.abs(battery);
+  if (absBat > 5) {
+    if (battery < 0) {
+      // Discharging: battery → load
+      edges.push({
+        id: 'battery-load', source: 'battery', target: 'load',
+        animated: true, style: { stroke: '#60A5FA', strokeWidth: sw(absBat) },
+        label: `${absBat.toFixed(0)}kW`,
+        labelStyle: { fill: '#60A5FA', fontSize: 11 },
+        ...marker('#60A5FA'),
+      });
+    } else {
+      // Charging: grid → battery (or solar → battery)
+      const chargeSrc = solar > 50 ? 'solar' : 'grid';
+      const chargeColor = solar > 50 ? '#FFB020' : '#F87171';
+      edges.push({
+        id: 'grid-battery', source: chargeSrc, target: 'battery',
+        animated: true, style: { stroke: chargeColor, strokeWidth: sw(absBat) },
+        label: `${absBat.toFixed(0)}kW`,
+        labelStyle: { fill: chargeColor, fontSize: 11 },
+        ...marker(chargeColor),
+      });
+    }
   }
 
-  // Grid → Load (when solar+battery insufficient)
-  if (grid > 0) {
-    edges.push({
-      id: 'grid-load', source: 'grid', target: 'load',
-      animated: true, style: { stroke: '#F87171', strokeWidth: Math.max(2, grid / 80) },
-      label: `${grid.toFixed(0)}kW`,
-      labelStyle: { fill: '#F87171', fontSize: 11 },
-      ...marker('#F87171'),
-    });
+  // Grid ↔ Load
+  const absGrid = Math.abs(grid);
+  if (absGrid > 5) {
+    if (grid > 0) {
+      // Importing: grid → load
+      edges.push({
+        id: 'grid-load', source: 'grid', target: 'load',
+        animated: true, style: { stroke: '#F87171', strokeWidth: sw(absGrid) },
+        label: `${absGrid.toFixed(0)}kW`,
+        labelStyle: { fill: '#F87171', fontSize: 11 },
+        ...marker('#F87171'),
+      });
+    } else {
+      // Exporting: load → grid (sell excess)
+      edges.push({
+        id: 'load-grid', source: 'load', target: 'grid',
+        animated: true, style: { stroke: '#F87171', strokeWidth: sw(absGrid), strokeDasharray: '5 3' },
+        label: `${absGrid.toFixed(0)}kW 售电`,
+        labelStyle: { fill: '#F87171', fontSize: 11 },
+        ...marker('#F87171'),
+      });
+    }
   }
 
   return edges;
@@ -106,6 +139,7 @@ const STATIONS = [
 export default function DigitalTwinFlow() {
   const [stationId, setStationId] = useState('station-001');
   const [realtime, setRealtime] = useState({ solar: 0, battery: 0, grid: 0, load: 0, soc: 50 });
+  const [demoMode, setDemoMode] = useState(false);
   const [legend] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -120,8 +154,8 @@ export default function DigitalTwinFlow() {
       if (station) {
         setRealtime({
           solar: latest.solarPowerKw || 0,
-          battery: Math.abs(latest.batteryPowerKw) || 0,
-          grid: Math.abs(latest.gridPowerKw) || 0,
+          battery: latest.batteryPowerKw || 0,  // positive=discharge, negative=charge
+          grid: latest.gridPowerKw || 0,        // positive=import, negative=export
           load: latest.loadPowerKw || 0,
           soc: latest.batterySoc || 50,
         });
@@ -134,6 +168,21 @@ export default function DigitalTwinFlow() {
     timerRef.current = setInterval(fetchData, 5000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [fetchData]);
+
+  // Demo mode: simulate daytime energy flow
+  useEffect(() => {
+    if (!demoMode) return;
+    const demo = () => ({
+      solar: 320 + Math.sin(Date.now() / 3000) * 80,
+      battery: -60 + Math.sin(Date.now() / 4000) * 20, // negative = charging
+      grid: -20 + Math.sin(Date.now() / 5000) * 10,   // negative = exporting
+      load: 180 + Math.sin(Date.now() / 4500) * 30,
+      soc: 65 + Math.sin(Date.now() / 8000) * 10,
+    });
+    setRealtime(demo());
+    const id = setInterval(() => setRealtime(demo()), 2000);
+    return () => clearInterval(id);
+  }, [demoMode]);
 
   // Build nodes from realtime data
   const buildNodes = (): Node[] => [
@@ -149,19 +198,21 @@ export default function DigitalTwinFlow() {
     {
       id: 'battery', type: 'energy', position: { x: 280, y: 80 },
       data: {
-        label: `储能 ${realtime.soc.toFixed(0)}%`, icon: '🔋', unit: 'kW', value: realtime.battery,
-        status: realtime.soc > 20 ? 'online' : realtime.soc > 10 ? 'warn' : 'offline',
-        color: '#60A5FA', description: `SOC ${realtime.soc.toFixed(0)}%`,
+        label: `储能 ${realtime.soc.toFixed(0)}%`, icon: '🔋', unit: 'kW',
+        value: Math.abs(realtime.battery),
+        status: realtime.battery < 0 ? 'charging' : realtime.battery > 0 ? 'online' : 'idle',
+        color: '#60A5FA',
+        description: realtime.battery < 0 ? `充电中 ${Math.abs(realtime.battery).toFixed(0)}kW` : realtime.battery > 0 ? `放电中 ${realtime.battery.toFixed(0)}kW` : `SOC ${realtime.soc.toFixed(0)}%`,
       },
       sourcePosition: Position.Right, targetPosition: Position.Left,
     },
     {
       id: 'grid', type: 'energy', position: { x: 560, y: 200 },
       data: {
-        label: '电网', icon: '⚡', unit: 'kW', value: realtime.grid,
+        label: '电网', icon: '⚡', unit: 'kW', value: Math.abs(realtime.grid),
         status: 'online', color: '#F87171', description: realtime.grid > 0 ? '购电' : '售电',
       },
-      sourcePosition: Position.Left, targetPosition: Position.Right,
+      sourcePosition: Position.Top, targetPosition: Position.Top,
     },
     {
       id: 'load', type: 'energy', position: { x: 560, y: -20 },
@@ -198,9 +249,20 @@ export default function DigitalTwinFlow() {
           <Select value={stationId} onChange={v => setStationId(v)} style={{ width: 200 }}
             options={STATIONS.map(s => ({ value: s.id, label: s.name }))}
           />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-            <Badge status="processing" /> 5s自动刷新
-          </span>
+          <button
+            onClick={() => setDemoMode(d => !d)}
+            style={{
+              padding: '4px 12px', borderRadius: 6, border: `1px solid ${demoMode ? '#34D399' : 'rgba(102,126,234,0.2)'}`,
+              background: demoMode ? 'rgba(52,211,153,0.15)' : 'transparent',
+              color: demoMode ? '#34D399' : 'rgba(255,255,255,0.5)',
+              fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            {demoMode ? '🌙 退出演示' : '▶ 演示模式'}
+          </button>
+          {demoMode && <Badge status="warning" />}
+          {!demoMode && <Badge status="processing" />}
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>5s刷新</span>
         </Space>
       </div>
 
@@ -208,8 +270,8 @@ export default function DigitalTwinFlow() {
       <Row gutter={10}>
         {[
           { label: '光伏出力', value: `${realtime.solar.toFixed(0)} kW`, color: '#FFB020' },
-          { label: '储能放电', value: `${realtime.battery.toFixed(0)} kW`, color: '#60A5FA' },
-          { label: '电网购电', value: `${realtime.grid.toFixed(0)} kW`, color: '#F87171' },
+          { label: realtime.battery >= 0 ? '储能放电' : '储能充电', value: `${Math.abs(realtime.battery).toFixed(0)} kW`, color: '#60A5FA' },
+          { label: realtime.grid >= 0 ? '电网购电' : '电网售电', value: `${Math.abs(realtime.grid).toFixed(0)} kW`, color: '#F87171' },
           { label: '负荷用电', value: `${realtime.load.toFixed(0)} kW`, color: '#A78BFA' },
           { label: '自发自用率', value: `${selfSufficiency.toFixed(0)}%`, color: '#34D399' },
         ].map(s => (
