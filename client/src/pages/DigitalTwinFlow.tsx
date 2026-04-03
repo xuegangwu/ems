@@ -114,14 +114,16 @@ export default function DigitalTwinFlow() {
       const r = await fetch('/api/mqtt/realtime');
       if (!r.ok) return;
       const d = await r.json();
-      const station = d.find((s: any) => s.id === stationId) || d[0];
+      const stations = d.stations || [];
+      const station = stations.find((s: any) => s.id === stationId) || stations[0];
+      const latest = station?.latest || {};
       if (station) {
         setRealtime({
-          solar: station.solar?.powerKw || 0,
-          battery: station.battery?.dischargeKw || 0,
-          grid: station.grid?.importKw || 0,
-          load: station.load?.powerKw || 0,
-          soc: station.battery?.soc || 50,
+          solar: latest.solarPowerKw || 0,
+          battery: Math.abs(latest.batteryPowerKw) || 0,
+          grid: Math.abs(latest.gridPowerKw) || 0,
+          load: latest.loadPowerKw || 0,
+          soc: latest.batterySoc || 50,
         });
       }
     } catch {}
