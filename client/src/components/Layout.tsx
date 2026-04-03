@@ -1,135 +1,292 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { Layout as AntdLayout } from 'antd';
 
-const MENU_ITEMS = [
-  { key: '/', label: '首页', icon: '🏠', group: null },
-  { key: '/monitor', label: '监控中心', icon: '📊', group: '监控运营' },
-  { key: '/digital-twin-flow', label: '能量流', icon: '⚡', group: '监控运营' },
-  { key: '/energy-breakdown', label: '能耗分解', icon: '📊', group: '监控运营' },
-  { key: '/alerts', label: '告警管理', icon: '🚨', group: '监控运营' },
-  { key: '/agent-pipeline', label: 'AI流水线', icon: '🔄', group: 'AI优化' },
-  { key: '/ai-prediction', label: 'AI预测', icon: '🤖', group: 'AI优化' },
-  { key: '/schedule', label: 'AI调度', icon: '⚡', group: 'AI优化' },
-  { key: '/electricity-price', label: '电价日历', icon: '📅', group: 'AI优化' },
-  { key: '/energy-report', label: '能源月报', icon: '📈', group: 'AI优化' },
-  { key: '/customers', label: '客户管理', icon: '👥', group: '资产与客户' },
-  { key: '/stations', label: '电站管理', icon: '🏭', group: '资产与客户' },
-  { key: '/work-order', label: '工单管理', icon: '🛠️', group: '资产与客户' },
-  { key: '/tools', label: '工具箱', icon: '🔧', group: '工具' },
-  { key: '/mqtt-settings', label: 'MQTT设置', icon: '📡', group: '工具' },
-  { key: '/rest-explorer', label: 'REST Explorer', icon: '🔌', group: '工具' },
-  { key: '/about', label: '关于', icon: 'ℹ️', group: '信息' },
+interface NavItem {
+  key: string;
+  label: string;
+  icon: string;
+  group?: string;
+  badge?: 'alert' | 'new';
+}
+
+const NAV_ITEMS: NavItem[] = [
+  // ── 指挥台 ──
+  { key: 'command', label: '能量指挥台', icon: '⚡', group: '主导航' },
+  { key: 'digital-twin-flow', label: '能量流', icon: '🌊', group: '主导航' },
+  { key: 'monitor', label: '监控中心', icon: '📊', group: '主导航' },
+  // ── AI优化 ──
+  { key: 'ai-prediction', label: 'AI预测', icon: '🤖', group: 'AI优化' },
+  { key: 'schedule', label: 'AI调度', icon: '⚡', group: 'AI优化' },
+  { key: 'vpp-trading', label: 'VPP交易', icon: '📈', group: 'AI优化' },
+  { key: 'electricity-price', label: '电价日历', icon: '📅', group: 'AI优化' },
+  // ── 交易 ──
+  { key: 'electricity-trade', label: '电力交易', icon: '💰', group: '交易策略' },
+  { key: 'station-trade', label: '电站交易', icon: '🏭', group: '交易策略' },
+  { key: 'energy-report', label: '能源月报', icon: '📋', group: '交易策略' },
+  // ── 资产 ──
+  { key: 'stations', label: '电站管理', icon: '🏢', group: '资产客户' },
+  { key: 'customers', label: '客户管理', icon: '👥', group: '资产客户' },
+  { key: 'work-order', label: '工单管理', icon: '🛠️', group: '资产客户' },
+  { key: 'alerts', label: '告警管理', icon: '🚨', group: '资产客户', badge: 'alert' },
+  // ── 工具 ──
+  { key: 'agent-pipeline', label: 'Agent流水线', icon: '🔄', group: '工具' },
+  { key: 'tools', label: '工具箱', icon: '🔧', group: '工具' },
+  { key: 'rest-explorer', label: 'REST Explorer', icon: '🔌', group: '工具' },
+  // ── 其他 ──
+  { key: 'about', label: '关于', icon: 'ℹ️', group: '信息' },
 ];
 
-export { MENU_ITEMS };
+// Route mapping
+const NAV_TO_ROUTE: Record<string, string> = {
+  'command': '/dashboard',
+  'digital-twin-flow': '/digital-twin-flow',
+  'monitor': '/monitor',
+  'ai-prediction': '/ai-prediction',
+  'schedule': '/schedule',
+  'vpp-trading': '/vpp-trading',
+  'electricity-price': '/electricity-price',
+  'electricity-trade': '/electricity-trade',
+  'station-trade': '/station-trade',
+  'energy-report': '/energy-report',
+  'stations': '/stations',
+  'customers': '/customers',
+  'work-order': '/work-order',
+  'alerts': '/alerts',
+  'agent-pipeline': '/agent-pipeline',
+  'tools': '/tools',
+  'rest-explorer': '/rest-explorer',
+  'about': '/about',
+};
 
-export default function Layout() {
-  const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+interface CommandPaletteProps {
+  open: boolean;
+  onClose: () => void;
+  onNavigate: (path: string) => void;
+}
 
-  const handleNav = (path: string) => navigate(path);
+function CommandPalette({ open, onClose, onNavigate }: CommandPaletteProps) {
+  const [query, setQuery] = React.useState('');
+  const [focused, setFocused] = React.useState(0);
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const allItems = NAV_ITEMS.map(item => ({
+    ...item,
+    route: NAV_TO_ROUTE[item.key],
+  }));
 
-  const renderMenu = () => {
-    const items: React.ReactNode[] = [];
-    let lastGroup: string | null = null;
-    for (const item of MENU_ITEMS) {
-      const showDivider = item.group !== null && item.group !== lastGroup;
-      if (item.group) lastGroup = item.group;
+  const filtered = query.trim()
+    ? allItems.filter(i =>
+        i.label.toLowerCase().includes(query.toLowerCase()) ||
+        i.group?.toLowerCase().includes(query.toLowerCase())
+      )
+    : allItems;
 
-      if (showDivider && !collapsed) {
-        items.push(
-          <div key={`div-${item.group}`}
-            style={{ padding: '16px 20px 4px', fontSize: 10, fontWeight: 600,
-              color: 'rgba(102,126,234,0.7)', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-            {item.group}
-          </div>
-        );
+  const groups = filtered.reduce<Record<string, typeof filtered>>((acc, item) => {
+    const g = item.group || '';
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(item);
+    return acc;
+  }, {});
+
+  React.useEffect(() => {
+    if (!open) { setQuery(''); setFocused(0); }
+  }, [open]);
+
+  const flatFiltered = filtered;
+
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!open) return;
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(f + 1, flatFiltered.length - 1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(f - 1, 0)); }
+      if (e.key === 'Enter' && flatFiltered[focused]) {
+        onNavigate(flatFiltered[focused].route);
+        onClose();
       }
-      if (showDivider && collapsed) {
-        items.push(<div key={`d-${item.group}`} style={{ height: 12 }} />);
-      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, focused, flatFiltered, onNavigate, onClose]);
 
-      items.push(
-        <div
-          key={item.key}
-          onClick={() => handleNav(item.key)}
-          style={{
-            padding: collapsed ? '10px 0' : '9px 16px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            borderLeft: isActive(item.key) ? '2px solid #667EEA' : '2px solid transparent',
-            color: isActive(item.key) ? 'white' : 'rgba(255,255,255,0.55)',
-            transition: 'all 0.2s',
-            fontSize: 14,
-            margin: '1px 8px',
-            borderRadius: 8,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-          }}
-        >
-          <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
-          {!collapsed && (
-            <span style={{ fontWeight: isActive(item.key) ? 500 : 400 }}>{item.label}</span>
-          )}
-        </div>
-      );
-    }
-    return items;
-  };
+  if (!open) return null;
 
   return (
-    <AntdLayout style={{ minHeight: '100vh' }}>
-      <AntdLayout.Sider
-        collapsible collapsed={collapsed} onCollapse={setCollapsed}
-        width={220} collapsedWidth={64}
-        style={{
-          background: 'linear-gradient(180deg, #0F0F23 0%, #1A1040 100%)',
-          borderRight: '1px solid rgba(102,126,234,0.15)',
-          position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto', zIndex: 100,
-        }}
-      >
-        {/* Logo */}
-        <div style={{
-          height: 64, display: 'flex', alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          padding: collapsed ? '0' : '0 20px',
-          borderBottom: '1px solid rgba(102,126,234,0.12)', gap: 10,
-        }}>
-          <span style={{ fontSize: 24 }}>⚡</span>
-          {!collapsed && (
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'white' }}>EnOS Platform</div>
-              <div style={{ fontSize: 10, color: 'rgba(102,126,234,0.8)', letterSpacing: '0.3px' }}>光之涟漪</div>
+    <div className="cmd-overlay" onClick={onClose}>
+      <div className="cmd-dialog" onClick={e => e.stopPropagation()}>
+        <div className="cmd-input-wrap">
+          <span style={{ fontSize: 18 }}>🔍</span>
+          <input
+            className="cmd-input"
+            placeholder="搜索页面、功能..."
+            value={query}
+            onChange={e => { setQuery(e.target.value); setFocused(0); }}
+            autoFocus
+          />
+          <span className="kbb">ESC</span>
+        </div>
+        <div className="cmd-results">
+          {Object.entries(groups).map(([group, items]) => (
+            <div key={group}>
+              <div className="cmd-group-label">{group}</div>
+              {items.map(item => {
+                const idx = flatFiltered.indexOf(item);
+                return (
+                  <div
+                    key={item.key}
+                    className={`cmd-item${idx === focused ? ' focused' : ''}`}
+                    onClick={() => { onNavigate(item.route); onClose(); }}
+                    onMouseEnter={() => setFocused(idx)}
+                  >
+                    <span className="cmd-item-icon">{item.icon}</span>
+                    <span className="cmd-item-label">{item.label}</span>
+                    {item.badge === 'alert' && (
+                      <span style={{ background: '#EF4444', borderRadius: '50%', width: 8, height: 8 }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-tertiary)', fontSize: 13 }}>
+              没有找到匹配结果
             </div>
           )}
         </div>
-
-        {/* Nav */}
-        <div style={{ padding: '8px 0', overflowY: 'auto', flex: 1 }}>
-          {renderMenu()}
-        </div>
-
-        <style>{`
-          .enos-nav-item:hover { background: rgba(102,126,234,0.12) !important; }
-          .enos-nav-item.active { background: rgba(102,126,234,0.2) !important; }
-        `}</style>
-      </AntdLayout.Sider>
-
-      <AntdLayout.Content style={{
-        marginLeft: collapsed ? 64 : 220,
-        transition: 'margin-left 0.2s',
-        background: '#0A0E1A', minHeight: '100vh',
-      }}>
-        <Outlet />
-      </AntdLayout.Content>
-    </AntdLayout>
+      </div>
+    </div>
   );
+}
+
+export default function Layout() {
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (key: string) => {
+    const route = NAV_TO_ROUTE[key];
+    if (!route) return false;
+    if (route === '/dashboard') return location.pathname === '/' || location.pathname === '/dashboard';
+    return location.pathname.startsWith(route);
+  };
+
+  const handleNav = (key: string) => {
+    const route = NAV_TO_ROUTE[key];
+    if (route) navigate(route);
+  };
+
+  // ⌘K / Ctrl+K
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Grouped nav items
+  const groups: Record<string, NavItem[]> = {};
+  for (const item of NAV_ITEMS) {
+    const g = item.group || '';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(item);
+  }
+
+  const logoSection = (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        cursor: 'pointer',
+        padding: '0 4px',
+        flexShrink: 0,
+      }}
+      onClick={() => navigate('/')}
+    >
+      <span style={{ fontSize: 22 }}>⚡</span>
+      {!sidebarExpanded && (
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1.2 }}>EnOS</div>
+          <div style={{ fontSize: 9, color: 'rgba(102,126,234,0.8)', letterSpacing: '0.3px' }}>光之涟漪</div>
+        </div>
+      )}
+    </div>
+  );
+
+  const rightSection = (
+    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="status-dot online" title="系统正常" />
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #667EEA, #764BA2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer',
+      }}>
+        伍
+      </div>
+    </div>
+  );
+
+  const mainSection = (
+    <>
+      <div className="layout-topbar">
+        {logoSection}
+        <div className="topbar-search" onClick={() => setCmdOpen(true)}>
+          <span>🔍</span>
+          <span>搜索页面、功能...</span>
+          <span className="kbb">⌘K</span>
+        </div>
+        {rightSection}
+      </div>
+
+      <div className="layout-main">
+        {/* Sidebar */}
+        <nav
+          className={`sidebar-nav${sidebarExpanded ? ' expanded' : ''}`}
+          onMouseEnter={() => setSidebarExpanded(true)}
+          onMouseLeave={() => setSidebarExpanded(false)}
+        >
+          {Object.entries(groups).map(([group, items]) => (
+            <React.Fragment key={group}>
+              {sidebarExpanded && (
+                <div className="sidebar-group-label">{group}</div>
+              )}
+              {items.map(item => (
+                <div
+                  key={item.key}
+                  className={`sidebar-nav-item${isActive(item.key) ? ' active' : ''}`}
+                  onClick={() => handleNav(item.key)}
+                  title={!sidebarExpanded ? item.label : ''}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  {sidebarExpanded && <span className="nav-label">{item.label}</span>}
+                  {item.badge === 'alert' && (
+                    <span className="badge" />
+                  )}
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        {/* Content */}
+        <main className={`content-area${sidebarExpanded ? ' sidebar-expanded' : ''}`}>
+          <Outlet />
+        </main>
+      </div>
+
+      <CommandPalette
+        open={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        onNavigate={(path) => { navigate(path); setCmdOpen(false); }}
+      />
+    </>
+  );
+
+  return <>{mainSection}</>;
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Component, ReactNode } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -84,7 +84,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Page><Login /></Page>} />
         <Route path="/" element={<Layout />}>
-          <Route index element={<Page><Dashboard /></Page>} />
+          <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Page><Dashboard /></Page>} />
           <Route path="digital-twin" element={<Page><DigitalTwin /></Page>} />
           <Route path="digital-twin-flow" element={<Page><DigitalTwinFlow /></Page>} />
