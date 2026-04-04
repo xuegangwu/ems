@@ -38,8 +38,8 @@ function generateHistoricalData(days = 90): { load: number[]; price: number[]; s
       baseLoad += (Math.random() - 0.5) * baseLoad * 0.2;
       load.push(Math.max(200, baseLoad));
 
-      let basePrice = isPeak ? 1.05 : isValley ? 0.32 : 0.62;
-      basePrice += (Math.random() - 0.5) * 0.15;
+      let basePrice = isPeak ? (isWeekend ? 0.88 : 1.20) : isValley ? (isWeekend ? 0.26 : 0.28) : (isWeekend ? 0.55 : 0.66);
+      basePrice += (Math.random() - 0.5) * 0.12;
       price.push(Math.max(0.1, basePrice));
 
       // Solar: bell curve peaking at noon, zero at night
@@ -191,6 +191,16 @@ function makeDispatch(loadF: number[], priceF: number[], solarF?: number[]): Dis
   let currentSoc = CURRENT_SOC;
   const results: DispatchHour[] = [];
 
+  // Dynamic price thresholds based on data distribution (data-driven)
+  const sortedPrices = [...priceF].sort((a, b) => a - b);
+  const p25 = sortedPrices[Math.floor(sortedPrices.length * 0.25)];
+  const p75 = sortedPrices[Math.floor(sortedPrices.length * 0.75)];
+  const avgPrice = priceF.reduce((s, p) => s + p, 0) / priceF.length;
+  const peakPriceThreshold = p75;          // Discharge when price > 75th percentile
+  const valleyPriceThreshold = p25;        // Charge when price < 25th percentile
+  const loadCapacity = Math.max(...loadF) * 0.80; // Discharge when load > 80% of daily peak
+  const loadBase = Math.min(...loadF) * 1.20;     // Charge when load < 120% of daily valley
+
   for (let i = 0; i < loadF.length; i++) {
     const t = new Date(now.getTime() + (i + 1) * 3600000);
     const h = t.getHours();
@@ -199,47 +209,44 @@ function makeDispatch(loadF: number[], priceF: number[], solarF?: number[]): Dis
     const load = loadF[i];
     const solar = solarF?.[i] ?? 0;
 
-    const isPeak = [8, 9, 10, 14, 15, 16, 18, 19, 20].includes(h);
-    const isValley = [0, 1, 2, 3, 4, 5, 6, 22, 23].includes(h);
-
-    const availableKwh = (currentSoc - BESS_MIN_SOC) * BESS_CAPACITY_KWH;
-    const canChargeKwh = (BESS_MAX_SOC - currentSoc) * BESS_CAPACITY_KWH;
+    const availableKwh = Math.max(0, (currentSoc - BESS_MIN_SOC) * BESS_CAPACITY_KWH);
+    const canChargeKwh = Math.max(0, (BESS_MAX_SOC - currentSoc) * BESS_CAPACITY_KWH);
     const chargePowerKw = Math.min(BESS_MAX_POWER_KW, canChargeKwh);
     const dischargePowerKw = Math.min(BESS_MAX_POWER_KW, availableKwh);
 
     // Decision logic with SOC constraints
     let recommendation: 'charge' | 'discharge' | 'hold' = 'hold';
-    let reason = '负荷与电价平稳';
+    let reason = '价格适中，负荷平稳';
     let actionEnergyKwh = 0;
     let revenue = 0;
 
-    if (isValley && price < 0.40 && currentSoc < BESS_MAX_SOC - 0.05) {
-      // Valley price: charge if not near full
+    if (price < valleyPriceThreshold && currentSoc < BESS_MAX_SOC - 0.03) {
+      // Valley: price below 90% of daily average → charge
       recommendation = 'charge';
       actionEnergyKwh = Math.min(chargePowerKw * 1, canChargeKwh);
       currentSoc = Math.min(BESS_MAX_SOC, currentSoc + actionEnergyKwh / BESS_CAPACITY_KWH);
-      reason = `谷时低价 ¥${price.toFixed(2)}，储能充电 ${actionEnergyKwh.toFixed(0)}kWh`;
-      revenue = -actionEnergyKwh * price * BESS_ROUNDTRIP_EFF; // cost
-    } else if (isPeak && price > 1.00 && currentSoc > BESS_MIN_SOC + 0.05) {
-      // Peak price: discharge if not near empty
+      reason = `低价 ¥${price.toFixed(3)} < ¥${valleyPriceThreshold.toFixed(3)}，储能充电 ${actionEnergyKwh.toFixed(0)}kWh`;
+      revenue = -(actionEnergyKwh * price * BESS_ROUNDTRIP_EFF);
+    } else if (price > peakPriceThreshold && currentSoc > BESS_MIN_SOC + 0.03) {
+      // Peak: price above 110% of daily average → discharge
       recommendation = 'discharge';
       actionEnergyKwh = Math.min(dischargePowerKw * 1, availableKwh);
       currentSoc = Math.max(BESS_MIN_SOC, currentSoc - actionEnergyKwh / BESS_CAPACITY_KWH);
-      revenue = actionEnergyKwh * price * BESS_ROUNDTRIP_EFF; // income
-      reason = `峰时高价 ¥${price.toFixed(2)}，储能放电 ${actionEnergyKwh.toFixed(0)}kWh`;
-    } else if (load > 3200 && currentSoc > BESS_MIN_SOC + 0.05) {
-      // Peak shaving: discharge to reduce peak demand charge
-      recommendation = 'discharge';
-      actionEnergyKwh = Math.min(dischargePowerKw * 1, availableKwh, (load - 2500) * 1);
-      currentSoc = Math.max(BESS_MIN_SOC, currentSoc - actionEnergyKwh / BESS_CAPACITY_KWH);
+      reason = `高价 ¥${price.toFixed(3)} > ¥${peakPriceThreshold.toFixed(3)}，储能放电 ${actionEnergyKwh.toFixed(0)}kWh`;
       revenue = actionEnergyKwh * price * BESS_ROUNDTRIP_EFF;
-      reason = `削峰负荷 ${(load / 1000).toFixed(1)}MW，放电 ${actionEnergyKwh.toFixed(0)}kWh`;
-    } else if (load < 700 && price > 0.65 && currentSoc < BESS_MAX_SOC - 0.05) {
-      // Low load + high price: charge to use excess solar
+    } else if (load > loadCapacity && currentSoc > BESS_MIN_SOC + 0.03) {
+      // Peak shaving: grid overload → discharge to reduce demand charge
+      recommendation = 'discharge';
+      actionEnergyKwh = Math.min(dischargePowerKw * 1, availableKwh, Math.max(0, load - loadCapacity) * 1);
+      currentSoc = Math.max(BESS_MIN_SOC, currentSoc - actionEnergyKwh / BESS_CAPACITY_KWH);
+      reason = `负荷尖峰 ${load}kW，储能放电削峰 ${actionEnergyKwh.toFixed(0)}kWh`;
+      revenue = actionEnergyKwh * price * BESS_ROUNDTRIP_EFF;
+    } else if (load < loadBase && price > avgPrice * 0.95 && currentSoc < BESS_MAX_SOC - 0.03) {
+      // Low load + high price: charge to store cheap energy or use excess solar
       recommendation = 'charge';
-      actionEnergyKwh = solar > 0 ? Math.min(solar * 0.5, canChargeKwh) : Math.min(200, canChargeKwh);
+      actionEnergyKwh = solar > 50 ? Math.min(solar * 0.5, canChargeKwh) : Math.min(200, canChargeKwh);
       currentSoc = Math.min(BESS_MAX_SOC, currentSoc + actionEnergyKwh / BESS_CAPACITY_KWH);
-      reason = solar > 100 ? `光伏剩余 ${solar.toFixed(0)}kW，储能消纳` : `谷时储能补充`;
+      reason = solar > 50 ? `光伏剩余 ${solar.toFixed(0)}kW，储能消纳` : `谷时储能补充`;
       revenue = -(actionEnergyKwh * price * BESS_ROUNDTRIP_EFF);
     }
 
@@ -286,23 +293,22 @@ function calcRevenue(results: DispatchHour[]): {
   // AI-optimized cost: follow dispatch recommendations
   for (const r of results) {
     withAIDailyCost += r.revenue; // revenue is negative for cost, positive for income
-    if (r.recommendation === 'discharge' && r.solar === undefined) {
-      // Discharge revenue counted as arbitrage
+    if (r.recommendation === 'discharge') {
+      // All discharge revenue counts as arbitrage
       arbitrageRevenue += r.revenue > 0 ? r.revenue : 0;
     }
-    if (r.recommendation === 'discharge' && r.load > 2500) {
+    if (r.recommendation === 'discharge' && r.load > 1500) {
       peakShavingRevenue += r.revenue > 0 ? r.revenue : 0;
     }
-    if (r.recommendation === 'charge' && r.solar && r.solar > 100) {
+    if (r.recommendation === 'charge' && (r.solar ?? 0) > 50) {
       carbonSavingKwh += r.actionEnergyKwh;
     }
   }
 
   // Without AI baseline: flatSOC = keep at 50%, no arbitrage
-  // Cost = buy at every hour at the given price
+  // Cost = load(kW) * price(yuan/kWh) * hours = yuan
   for (let i = 0; i < priceF.length; i++) {
-    // Baseline: pay full price for all load, no solar offset
-    withoutAIDailyCost += (loadF[i] / 1000) * priceF[i]; // MWh * yuan/kWh = yuan
+    withoutAIDailyCost += loadF[i] * priceF[i]; // kW * yuan/kWh = yuan
   }
 
   const dailyRevenue = arbitrageRevenue + peakShavingRevenue;
@@ -310,8 +316,8 @@ function calcRevenue(results: DispatchHour[]): {
 
   return {
     dailyRevenue: parseFloat(dailyRevenue.toFixed(2)),
-    monthlyProjected: parseFloat((dailyRevenue * 30).toFixed(2)),
-    annualProjected: parseFloat((dailyRevenue * 365).toFixed(2)),
+    monthlyProjected: parseFloat((dailySaving * 30).toFixed(2)),
+    annualProjected: parseFloat((dailySaving * 365).toFixed(2)),
     peakShavingRevenue: parseFloat(peakShavingRevenue.toFixed(2)),
     arbitrageRevenue: parseFloat(arbitrageRevenue.toFixed(2)),
     carbonSavingKwh: parseFloat(carbonSavingKwh.toFixed(1)),
