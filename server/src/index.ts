@@ -18,6 +18,7 @@ import { mqttRoutes } from './routes/mqttRoutes.js';
 import { orchestratorRoutes } from './routes/orchestratorRoutes.js';
 import { marketRoutes } from './routes/marketRoutes.js';
 import { default as storeRoutes } from './routes/storeRoutes.js';
+import { realtimeRoutes } from './routes/realtimeRoutes.js';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/mqtt', mqttRoutes);
 app.use('/api/agents', orchestratorRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
 // ─── Swagger API Documentation ──────────────────────────────────────────────
 const swaggerSpec = swaggerJsdoc({

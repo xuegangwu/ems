@@ -361,23 +361,51 @@ export default function DigitalTwin() {
     setTwin(mockTwinData[selected] || mockTwinData['station-001']);
   }, [selected]);
 
+  // Fetch real-time data from InfluxDB backend (every 10s)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTwin(prev => {
-        const newGen = Math.max(0, prev.realTime.generation + (Math.random() - 0.5) * 80);
-        const newCons = Math.max(0, prev.realTime.consumption + (Math.random() - 0.5) * 40);
-        const newSoc = Math.max(20, Math.min(95, prev.realTime.storageSoc + (Math.random() - 0.5) * 2));
-        const newEv = prev.realTime.evCharging > 0 ? Math.max(0, prev.realTime.evCharging + (Math.random() - 0.5) * 10) : (Math.random() > 0.7 ? Math.random() * 80 : 0);
-        return {
-          ...prev,
-          realTime: { ...prev.realTime, generation: newGen, consumption: newCons, storageSoc: newSoc, temperature: Math.max(20, Math.min(45, prev.realTime.temperature + (Math.random() - 0.5) * 1)), evCharging: newEv },
-          vpp: prev.vpp ? { ...prev.vpp, totalCapacity: Math.round(newSoc * 12 + newEv * 3), bessCapacity: Math.round(newSoc * 10), evCapacity: Math.round(newEv * 3), currentPrice: Math.max(0.5, Math.min(1.5, prev.vpp.currentPrice + (Math.random() - 0.5) * 0.05)), monthlyRevenue: Math.round(prev.vpp.monthlyRevenue + (Math.random() - 0.5) * 50) } : undefined,
-          devices: prev.devices.map(d => ({ ...d, value: d.type === 'sensor' && d.unit === '°C' ? parseFloat((prev.realTime.temperature + (Math.random() - 0.5)).toFixed(1)) : d.type === 'battery_bms' ? parseFloat(newSoc.toFixed(1)) : d.type === 'inverter' ? parseFloat((newGen * (0.4 + Math.random() * 0.2)).toFixed(0)) : d.type === 'ev_charger' ? parseFloat(newEv.toFixed(0)) : d.value, lastUpdate: new Date().toLocaleTimeString('zh-CN') })),
+    const fetchRealtime = async () => {
+      try {
+        const res = await fetch('/api/realtime');
+        const json = await res.json();
+        if (!json.success || !json.data?.length) return;
+        // Find the station matching the current selection
+        const stationData = json.data.find((s: any) =>
+          s.station_id === selected || s.station_id?.includes(selected.replace('station-', ''))
+        );
+        if (!stationData) return;
+        const rt = {
+          generation: stationData.pv_generation_power_kw ?? stationData.pv_power_kw ?? 0,
+          consumption: stationData.load_power_kw ?? 0,
+          storage: (stationData.bess_soc_pct ?? 78) / 100 * 4800,
+          storageSoc: stationData.bess_soc_pct ?? 78,
+          gridExport: Math.max(0, (stationData.pv_power_kw ?? 0) - (stationData.load_power_kw ?? 0)),
+          gridImport: Math.max(0, (stationData.load_power_kw ?? 0) - (stationData.pv_power_kw ?? 0)),
+          efficiency: stationData.pv_irradiance_wm2 ? Math.min(99, 85 + (Number(stationData.pv_irradiance_wm2) / 1000) * 10) : 94.2,
+          temperature: stationData.pv_temperature_c ?? 28.5,
+          evCharging: stationData.ev_charging_power_kw ?? 0,
         };
-      });
-    }, 3000);
+        setTwin(prev => ({
+          ...prev,
+          realTime: rt,
+          devices: prev.devices.map(d => ({
+            ...d,
+            value: d.type === 'sensor' && d.unit === '°C' ? Number(rt.temperature.toFixed(1)) :
+              d.type === 'battery_bms' ? Number(rt.storageSoc.toFixed(1)) :
+              d.type === 'inverter' ? Number((rt.generation * 0.97).toFixed(0)) :
+              d.type === 'ev_charger' ? Number(rt.evCharging.toFixed(0)) :
+              d.type === 'meter' ? Number(rt.generation.toFixed(0)) : d.value,
+            lastUpdate: new Date().toLocaleTimeString('zh-CN'),
+          })),
+        }));
+      } catch (_) {
+        // Silently fall back — data will stay at last value
+      }
+    };
+
+    fetchRealtime();
+    const interval = setInterval(fetchRealtime, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selected]);
 
   const stationOptions = Object.values(mockTwinData).map(t => ({ value: t.station.id, label: t.station.name }));
 
