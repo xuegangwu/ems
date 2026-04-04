@@ -14,12 +14,14 @@ const BATCH_SIZE = 16;
 
 let loadModel: tf.LayersModel | null = null;
 let priceModel: tf.LayersModel | null = null;
+let solarModel: tf.LayersModel | null = null;
 let modelsReady = false;
 
 // ─── Synthetic historical data ────────────────────────────────────────────────
-function generateHistoricalData(days = 90): { load: number[]; price: number[] } {
+function generateHistoricalData(days = 90): { load: number[]; price: number[]; solar: number[] } {
   const load: number[] = [];
   const price: number[] = [];
+  const solar: number[] = [];
   const now = Date.now();
 
   for (let d = days; d >= 0; d--) {
@@ -39,10 +41,17 @@ function generateHistoricalData(days = 90): { load: number[]; price: number[] } 
       let basePrice = isPeak ? 1.05 : isValley ? 0.32 : 0.62;
       basePrice += (Math.random() - 0.5) * 0.15;
       price.push(Math.max(0.1, basePrice));
+
+      // Solar: bell curve peaking at noon, zero at night
+      const solarFactor = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(hour)
+        ? Math.sin((hour - 6) / 12 * Math.PI) * (0.85 + Math.random() * 0.15)
+        : 0;
+      const cloudFactor = 1 - (Math.random() * 0.25); // 75%-100% efficiency
+      solar.push(Math.max(0, solarFactor * cloudFactor * 4800)); // 4800kW peak capacity
     }
   }
 
-  return { load, price };
+  return { load, price, solar };
 }
 
 // ─── Normalize / denormalize ─────────────────────────────────────────────────
@@ -93,7 +102,7 @@ async function initModels() {
   if (modelsReady) return;
   console.log('[Predict] Training LSTM models (~5 epochs, please wait)...');
 
-  const { load, price } = generateHistoricalData(30);
+  const { load, price, solar } = generateHistoricalData(30);
 
   // Load model
   const loadSeqs = createSequences(load);
@@ -114,6 +123,16 @@ async function initModels() {
   priceSeqs.X.dispose();
   priceSeqs.y.dispose();
   console.log('[Predict] Price model trained ✓');
+
+  // Solar model
+  const solarSeqs = createSequences(solar);
+  solarModel = buildLSTM([SEQUENCE_LEN, 1]);
+  await solarModel.fit(solarSeqs.X, solarSeqs.y, {
+    epochs: EPOCHS, batchSize: BATCH_SIZE, verbose: 0, validationSplit: 0.1,
+  });
+  solarSeqs.X.dispose();
+  solarSeqs.y.dispose();
+  console.log('[Predict] Solar model trained ✓');
 
   modelsReady = true;
 }
@@ -263,6 +282,36 @@ export async function getDispatchRecommendations(req: express.Request, res: expr
   }
 }
 
+export async function getSolarForecast(req: express.Request, res: express.Response) {
+  try {
+    await initModels();
+    const recent = generateHistoricalData(1).solar.slice(-SEQUENCE_LEN);
+    const { values, confidence } = await runForecast(solarModel!, recent);
+    const now = new Date();
+
+    const data = values.map((power, i) => {
+      const t = new Date(now.getTime() + (i + 1) * 3600000);
+      const h = t.getHours();
+      const isDaylight = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(h);
+      const efficiency = isDaylight ? Math.sin((h - 6) / 12 * Math.PI) : 0;
+      return {
+        timestamp: t.toISOString(),
+        hour: `${String(h).padStart(2, '0')}:00`,
+        power: Math.round(power),
+        powerUpper: Math.round(power * 1.1),
+        powerLower: Math.round(power * 0.75),
+        confidence: parseFloat(confidence.toFixed(2)),
+        efficiency: parseFloat((efficiency * 100).toFixed(1)),
+      };
+    });
+
+    res.json({ success: true, horizon: FORECAST_HORIZON, data });
+  } catch (err) {
+    console.error('[Predict] getSolarForecast error:', err);
+    res.status(500).json({ success: false, error: 'Solar forecast failed' });
+  }
+}
+
 export async function getCombinedForecast(req: express.Request, res: express.Response) {
   try {
     await initModels();
@@ -296,5 +345,72 @@ export async function getCombinedForecast(req: express.Request, res: express.Res
   } catch (err) {
     console.error('[Predict] getCombinedForecast error:', err);
     res.status(500).json({ success: false, error: 'Combined forecast failed' });
+  }
+}
+
+export async function getThreeInOneForecast(req: express.Request, res: express.Response) {
+  try {
+    await initModels();
+    const hist = generateHistoricalData(1);
+    const recentLoad = hist.load.slice(-SEQUENCE_LEN);
+    const recentPrice = hist.price.slice(-SEQUENCE_LEN);
+    const recentSolar = hist.solar.slice(-SEQUENCE_LEN);
+
+    const [loadResult, priceResult, solarResult] = await Promise.all([
+      runForecast(loadModel!, recentLoad),
+      runForecast(priceModel!, recentPrice),
+      runForecast(solarModel!, recentSolar),
+    ]);
+
+    const recommendations = makeDispatch(loadResult.values, priceResult.values);
+    const now = new Date();
+
+    const data = loadResult.values.map((load, i) => {
+      const t = new Date(now.getTime() + (i + 1) * 3600000);
+      const h = t.getHours();
+      const isDaylight = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(h);
+      const efficiency = isDaylight ? Math.sin((h - 6) / 12 * Math.PI) : 0;
+
+      return {
+        timestamp: t.toISOString(),
+        hour: `${String(h).padStart(2, '0')}:00`,
+        load: Math.round(load),
+        loadUpper: Math.round(load * 1.12),
+        loadLower: Math.round(load * 0.88),
+        solar: Math.round(solarResult.values[i]),
+        solarUpper: Math.round(solarResult.values[i] * 1.1),
+        solarLower: Math.round(solarResult.values[i] * 0.75),
+        price: parseFloat(Math.max(0.1, priceResult.values[i]).toFixed(4)),
+        priceUpper: parseFloat((Math.max(0.1, priceResult.values[i]) * 1.18).toFixed(4)),
+        priceLower: parseFloat((Math.max(0.1, priceResult.values[i]) * 0.82).toFixed(4)),
+        efficiency: parseFloat((efficiency * 100).toFixed(1)),
+        confidence: parseFloat(((loadResult.confidence + priceResult.confidence + solarResult.confidence) / 3).toFixed(2)),
+        recommendation: recommendations[i]?.recommendation ?? 'hold',
+        reason: recommendations[i]?.reason ?? '',
+      };
+    });
+
+    // Summary stats
+    const peakSolarHour = data.reduce((max, d) => d.solar > max.solar ? d : max, data[0]);
+    const peakLoadHour = data.reduce((max, d) => d.load > max.load ? d : max, data[0]);
+    const chargeCount = data.filter(d => d.recommendation === 'charge').length;
+    const dischargeCount = data.filter(d => d.recommendation === 'discharge').length;
+
+    res.json({
+      success: true,
+      horizon: FORECAST_HORIZON,
+      modelVersion: 'LSTM-v2.0-solar',
+      summary: {
+        peakSolar: { hour: peakSolarHour.hour, power: peakSolarHour.solar },
+        peakLoad: { hour: peakLoadHour.hour, load: peakLoadHour.load },
+        chargeCount,
+        dischargeCount,
+        avgConfidence: parseFloat(((loadResult.confidence + priceResult.confidence + solarResult.confidence) / 3).toFixed(2)),
+      },
+      data,
+    });
+  } catch (err) {
+    console.error('[Predict] getThreeInOneForecast error:', err);
+    res.status(500).json({ success: false, error: 'Three-in-one forecast failed' });
   }
 }
