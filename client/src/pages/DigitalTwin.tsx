@@ -167,6 +167,8 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
   const [dispatchActive, setDispatchActive] = useState(false);
   const [dispatchData, setDispatchData] = useState<any[]>([]);
   const [dispatchLoading, setDispatchLoading] = useState(false);
+  const [marketData, setMarketData] = useState<any>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
 
   const loadDispatch = useCallback(async () => {
     if (dispatchData.length > 0) return;
@@ -178,6 +180,21 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
     } catch (_) {}
     setDispatchLoading(false);
   }, [dispatchData.length]);
+
+  const loadMarket = useCallback(async () => {
+    if (marketData) return;
+    setMarketLoading(true);
+    try {
+      const [statusRes, bidRes] = await Promise.all([
+        fetch('/api/vpp/market/status'),
+        fetch('/api/vpp/report/daily'),
+      ]);
+      const status = await statusRes.json();
+      const report = await bidRes.json();
+      setMarketData({ status, report });
+    } catch (_) {}
+    setMarketLoading(false);
+  }, [marketData]);
 
   const tabItems = [
     {
@@ -205,6 +222,64 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
             </div>
           )}
         </>
+      ),
+    },
+    {
+      key: 'vpp-market',
+      label: <><span>📊</span> 市场</>,
+      children: (
+        <div style={{ padding: '8px 0' }}>
+          {marketLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin size="large" /></div>
+          ) : marketData ? (
+            <>
+              <Row gutter={[10, 10]}>
+                {[
+                  { label: '市场状态', value: marketData.status.market_status === 'responding' ? '⚡ 响应中' : marketData.status.market_status === 'bidding' ? '📊 申报中' : '✓ 待机', color: marketData.status.market_status === 'responding' ? '#00D4AA' : marketData.status.market_status === 'bidding' ? '#FF9500' : '#667EEA' },
+                  { label: 'AGC信号', value: marketData.status.dispatch_signal === 'DISCHARGE' ? '⚡ 放电' : marketData.status.dispatch_signal === 'CHARGE' ? '🔋 充电' : '⏸ 待机', color: marketData.status.dispatch_signal === 'DISCHARGE' ? '#FF4D4F' : marketData.status.dispatch_signal === 'CHARGE' ? '#00D4AA' : '#667EEA' },
+                  { label: '目标功率', value: `${(marketData.status.target_mw * 1000).toFixed(0)} kW`, color: '#FFD700' },
+                  { label: '当前SOC', value: `${marketData.status.soc_pct}%`, color: '#667EEA' },
+                  { label: '签约容量', value: `${marketData.status.signed_capacity_kw} kW`, color: '#38A169' },
+                  { label: '响应电价', value: `¥${marketData.status.current_price.toFixed(3)}/kWh`, color: '#FF9500' },
+                ].map(s => (
+                  <Col xs={12} sm={8} md={4} key={s.label}>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{s.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.value}</div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+              {marketData.report?.summary && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>📈 日市场报告</div>
+                  <Row gutter={[8, 8]}>
+                    {[
+                      { label: '日收益', value: `¥${marketData.report.summary.daily_revenue_yuan.toFixed(0)}`, color: '#FFD700' },
+                      { label: '月度预估', value: `¥${(marketData.report.summary.daily_revenue_yuan * 30).toFixed(0)}`, color: '#00D4AA' },
+                      { label: '年化收益', value: `¥${(marketData.report.summary.daily_revenue_yuan * 365).toFixed(0)}`, color: '#FF9500' },
+                      { label: '放电量', value: `${marketData.report.summary.total_discharge_kwh.toFixed(0)} kWh`, color: '#FF4D4F' },
+                      { label: '响应率', value: `${marketData.report.summary.response_rate_pct}%`, color: '#667EEA' },
+                      { label: 'AGC类型', value: marketData.status.asdu_type || 'C_SE_TF_1 (49)', color: '#9B59B6' },
+                    ].map(s => (
+                      <Col xs={12} sm={8} md={4} key={s.label}>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>{s.label}</div>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: s.color }}>{s.value}</div>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <Spin size="large" />
+              <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>加载市场数据...</div>
+            </div>
+          )}
+        </div>
       ),
     },
     {
@@ -261,8 +336,10 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
       activeTabKey={dispatchActive ? 'ai-dispatch' : 'vpp-status'}
       onTabChange={(key) => {
         const isAi = key === 'ai-dispatch';
+        const isMarket = key === 'vpp-market';
         setDispatchActive(isAi);
-        if (isAi) loadDispatch();
+        if (isAi) { setDispatchData([]); loadDispatch(); }
+        if (isMarket) { setMarketData(null); loadMarket(); }
       }}
       bodyStyle={{ padding: dispatchActive ? 0 : undefined }}
     />
