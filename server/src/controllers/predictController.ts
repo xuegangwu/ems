@@ -162,48 +162,163 @@ async function runForecast(
 }
 
 // ─── Dispatch recommendations ────────────────────────────────────────────────
-function makeDispatch(loadF: number[], priceF: number[]): Array<{
+// ─── Battery dispatch config ─────────────────────────────────────────────────────
+const BESS_CAPACITY_KWH = 4800;     // 4.8 MWh = 4800 kWh
+const BESS_MAX_SOC = 0.95;          // 95% max SOC
+const BESS_MIN_SOC = 0.20;          // 20% min SOC (depth of discharge limit)
+const BESS_MAX_POWER_KW = 1200;      // Max charge/discharge power (kW)
+const BESS_ROUNDTRIP_EFF = 0.90;     // Round-trip efficiency
+const CURRENT_SOC = 0.78;            // Current battery SOC (from station real-time)
+
+// ─── SOC-aware dispatch ─────────────────────────────────────────────────────────
+interface DispatchHour {
   hour: string;
   recommendation: 'charge' | 'discharge' | 'hold';
   reason: string;
   price: number;
   load: number;
-}> {
+  solar?: number;
+  soc: number;
+  chargePowerKw: number;
+  dischargePowerKw: number;
+  availableEnergyKwh: number;
+  actionEnergyKwh: number;
+  revenue: number;
+}
+
+function makeDispatch(loadF: number[], priceF: number[], solarF?: number[]): DispatchHour[] {
   const now = new Date();
-  return loadF.map((load, i) => {
+  let currentSoc = CURRENT_SOC;
+  const results: DispatchHour[] = [];
+
+  for (let i = 0; i < loadF.length; i++) {
     const t = new Date(now.getTime() + (i + 1) * 3600000);
     const h = t.getHours();
     const hour = `${String(h).padStart(2, '0')}:00`;
     const price = priceF[i];
+    const load = loadF[i];
+    const solar = solarF?.[i] ?? 0;
 
     const isPeak = [8, 9, 10, 14, 15, 16, 18, 19, 20].includes(h);
     const isValley = [0, 1, 2, 3, 4, 5, 6, 22, 23].includes(h);
 
+    const availableKwh = (currentSoc - BESS_MIN_SOC) * BESS_CAPACITY_KWH;
+    const canChargeKwh = (BESS_MAX_SOC - currentSoc) * BESS_CAPACITY_KWH;
+    const chargePowerKw = Math.min(BESS_MAX_POWER_KW, canChargeKwh);
+    const dischargePowerKw = Math.min(BESS_MAX_POWER_KW, availableKwh);
+
+    // Decision logic with SOC constraints
     let recommendation: 'charge' | 'discharge' | 'hold' = 'hold';
     let reason = '负荷与电价平稳';
+    let actionEnergyKwh = 0;
+    let revenue = 0;
 
-    if (isValley && price < 0.40) {
+    if (isValley && price < 0.40 && currentSoc < BESS_MAX_SOC - 0.05) {
+      // Valley price: charge if not near full
       recommendation = 'charge';
-      reason = `谷时低价 ¥${price.toFixed(2)}/kWh，储能充电`;
-    } else if (isPeak && price > 1.00) {
+      actionEnergyKwh = Math.min(chargePowerKw * 1, canChargeKwh);
+      currentSoc = Math.min(BESS_MAX_SOC, currentSoc + actionEnergyKwh / BESS_CAPACITY_KWH);
+      reason = `谷时低价 ¥${price.toFixed(2)}，储能充电 ${actionEnergyKwh.toFixed(0)}kWh`;
+      revenue = -actionEnergyKwh * price * BESS_ROUNDTRIP_EFF; // cost
+    } else if (isPeak && price > 1.00 && currentSoc > BESS_MIN_SOC + 0.05) {
+      // Peak price: discharge if not near empty
       recommendation = 'discharge';
-      reason = `峰时高价 ¥${price.toFixed(2)}/kWh，放电套利`;
-    } else if (load > 3200) {
+      actionEnergyKwh = Math.min(dischargePowerKw * 1, availableKwh);
+      currentSoc = Math.max(BESS_MIN_SOC, currentSoc - actionEnergyKwh / BESS_CAPACITY_KWH);
+      revenue = actionEnergyKwh * price * BESS_ROUNDTRIP_EFF; // income
+      reason = `峰时高价 ¥${price.toFixed(2)}，储能放电 ${actionEnergyKwh.toFixed(0)}kWh`;
+    } else if (load > 3200 && currentSoc > BESS_MIN_SOC + 0.05) {
+      // Peak shaving: discharge to reduce peak demand charge
       recommendation = 'discharge';
-      reason = `尖峰负荷 ${(load / 1000).toFixed(1)}MW，储能放电削峰`;
-    } else if (load < 700 && price > 0.65) {
+      actionEnergyKwh = Math.min(dischargePowerKw * 1, availableKwh, (load - 2500) * 1);
+      currentSoc = Math.max(BESS_MIN_SOC, currentSoc - actionEnergyKwh / BESS_CAPACITY_KWH);
+      revenue = actionEnergyKwh * price * BESS_ROUNDTRIP_EFF;
+      reason = `削峰负荷 ${(load / 1000).toFixed(1)}MW，放电 ${actionEnergyKwh.toFixed(0)}kWh`;
+    } else if (load < 700 && price > 0.65 && currentSoc < BESS_MAX_SOC - 0.05) {
+      // Low load + high price: charge to use excess solar
       recommendation = 'charge';
-      reason = '负荷低谷 + 电价偏高，储能补充充电';
+      actionEnergyKwh = solar > 0 ? Math.min(solar * 0.5, canChargeKwh) : Math.min(200, canChargeKwh);
+      currentSoc = Math.min(BESS_MAX_SOC, currentSoc + actionEnergyKwh / BESS_CAPACITY_KWH);
+      reason = solar > 100 ? `光伏剩余 ${solar.toFixed(0)}kW，储能消纳` : `谷时储能补充`;
+      revenue = -(actionEnergyKwh * price * BESS_ROUNDTRIP_EFF);
     }
 
-    return {
+    results.push({
       hour,
       recommendation,
       reason,
       price: parseFloat(Math.max(0.1, price).toFixed(4)),
       load: Math.round(load),
-    };
-  });
+      solar: solar ? Math.round(solar) : undefined,
+      soc: parseFloat((currentSoc * 100).toFixed(1)),
+      chargePowerKw: Math.round(chargePowerKw),
+      dischargePowerKw: Math.round(dischargePowerKw),
+      availableEnergyKwh: parseFloat(availableKwh.toFixed(1)),
+      actionEnergyKwh: parseFloat(actionEnergyKwh.toFixed(1)),
+      revenue: parseFloat(revenue.toFixed(2)),
+    });
+  }
+
+  return results;
+}
+
+// ─── Revenue calculation ─────────────────────────────────────────────────────────
+function calcRevenue(results: DispatchHour[]): {
+  dailyRevenue: number;
+  monthlyProjected: number;
+  annualProjected: number;
+  peakShavingRevenue: number;
+  arbitrageRevenue: number;
+  carbonSavingKwh: number;
+  withoutAIDailyCost: number;
+  withAIDailyCost: number;
+  dailySaving: number;
+} {
+  let arbitrageRevenue = 0;
+  let peakShavingRevenue = 0;
+  let carbonSavingKwh = 0;
+  let withAIDailyCost = 0;
+  let withoutAIDailyCost = 0;
+
+  const priceF = results.map(r => r.price);
+  const loadF = results.map(r => r.load);
+
+  // AI-optimized cost: follow dispatch recommendations
+  for (const r of results) {
+    withAIDailyCost += r.revenue; // revenue is negative for cost, positive for income
+    if (r.recommendation === 'discharge' && r.solar === undefined) {
+      // Discharge revenue counted as arbitrage
+      arbitrageRevenue += r.revenue > 0 ? r.revenue : 0;
+    }
+    if (r.recommendation === 'discharge' && r.load > 2500) {
+      peakShavingRevenue += r.revenue > 0 ? r.revenue : 0;
+    }
+    if (r.recommendation === 'charge' && r.solar && r.solar > 100) {
+      carbonSavingKwh += r.actionEnergyKwh;
+    }
+  }
+
+  // Without AI baseline: flatSOC = keep at 50%, no arbitrage
+  // Cost = buy at every hour at the given price
+  for (let i = 0; i < priceF.length; i++) {
+    // Baseline: pay full price for all load, no solar offset
+    withoutAIDailyCost += (loadF[i] / 1000) * priceF[i]; // MWh * yuan/kWh = yuan
+  }
+
+  const dailyRevenue = arbitrageRevenue + peakShavingRevenue;
+  const dailySaving = withoutAIDailyCost + withAIDailyCost;
+
+  return {
+    dailyRevenue: parseFloat(dailyRevenue.toFixed(2)),
+    monthlyProjected: parseFloat((dailyRevenue * 30).toFixed(2)),
+    annualProjected: parseFloat((dailyRevenue * 365).toFixed(2)),
+    peakShavingRevenue: parseFloat(peakShavingRevenue.toFixed(2)),
+    arbitrageRevenue: parseFloat(arbitrageRevenue.toFixed(2)),
+    carbonSavingKwh: parseFloat(carbonSavingKwh.toFixed(1)),
+    withoutAIDailyCost: parseFloat(withoutAIDailyCost.toFixed(2)),
+    withAIDailyCost: parseFloat(withAIDailyCost.toFixed(2)),
+    dailySaving: parseFloat(dailySaving.toFixed(2)),
+  };
 }
 
 // ─── API Handlers ─────────────────────────────────────────────────────────────
@@ -259,14 +374,17 @@ export async function getDispatchRecommendations(req: express.Request, res: expr
     const hist = generateHistoricalData(1);
     const recentLoad = hist.load.slice(-SEQUENCE_LEN);
     const recentPrice = hist.price.slice(-SEQUENCE_LEN);
+    const recentSolar = hist.solar.slice(-SEQUENCE_LEN);
 
-    const [loadResult, priceResult] = await Promise.all([
+    const [loadResult, priceResult, solarResult] = await Promise.all([
       runForecast(loadModel!, recentLoad),
       runForecast(priceModel!, recentPrice),
+      solarModel ? runForecast(solarModel, recentSolar) : Promise.resolve({ values: recentSolar, confidence: 0.8 }),
     ]);
 
-    const recommendations = makeDispatch(loadResult.values, priceResult.values);
-    const avgConfidence = (loadResult.confidence + priceResult.confidence) / 2;
+    const recommendations = makeDispatch(loadResult.values, priceResult.values, solarResult.values);
+    const revenue = calcRevenue(recommendations);
+    const avgConfidence = (loadResult.confidence + priceResult.confidence + solarResult.confidence) / 3;
 
     res.json({
       success: true,
@@ -274,6 +392,7 @@ export async function getDispatchRecommendations(req: express.Request, res: expr
       chargeCount: recommendations.filter(r => r.recommendation === 'charge').length,
       dischargeCount: recommendations.filter(r => r.recommendation === 'discharge').length,
       holdCount: recommendations.filter(r => r.recommendation === 'hold').length,
+      revenue,
       data: recommendations.slice(0, 24),
     });
   } catch (err) {
@@ -362,10 +481,11 @@ export async function getThreeInOneForecast(req: express.Request, res: express.R
       runForecast(solarModel!, recentSolar),
     ]);
 
-    const recommendations = makeDispatch(loadResult.values, priceResult.values);
+    const recommendations = makeDispatch(loadResult.values, priceResult.values, solarResult.values);
+    const revenue = calcRevenue(recommendations);
     const now = new Date();
 
-    const data = loadResult.values.map((load, i) => {
+    const data = recommendations.slice(0, FORECAST_HORIZON).map((rec, i) => {
       const t = new Date(now.getTime() + (i + 1) * 3600000);
       const h = t.getHours();
       const isDaylight = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(h);
@@ -373,39 +493,44 @@ export async function getThreeInOneForecast(req: express.Request, res: express.R
 
       return {
         timestamp: t.toISOString(),
-        hour: `${String(h).padStart(2, '0')}:00`,
-        load: Math.round(load),
-        loadUpper: Math.round(load * 1.12),
-        loadLower: Math.round(load * 0.88),
-        solar: Math.round(solarResult.values[i]),
-        solarUpper: Math.round(solarResult.values[i] * 1.1),
-        solarLower: Math.round(solarResult.values[i] * 0.75),
-        price: parseFloat(Math.max(0.1, priceResult.values[i]).toFixed(4)),
-        priceUpper: parseFloat((Math.max(0.1, priceResult.values[i]) * 1.18).toFixed(4)),
-        priceLower: parseFloat((Math.max(0.1, priceResult.values[i]) * 0.82).toFixed(4)),
+        hour: rec.hour,
+        load: rec.load,
+        loadUpper: Math.round(rec.load * 1.12),
+        loadLower: Math.round(rec.load * 0.88),
+        solar: rec.solar ?? 0,
+        solarUpper: Math.round((rec.solar ?? 0) * 1.1),
+        solarLower: Math.round((rec.solar ?? 0) * 0.75),
+        price: rec.price,
+        priceUpper: parseFloat((rec.price * 1.18).toFixed(4)),
+        priceLower: parseFloat((rec.price * 0.82).toFixed(4)),
         efficiency: parseFloat((efficiency * 100).toFixed(1)),
         confidence: parseFloat(((loadResult.confidence + priceResult.confidence + solarResult.confidence) / 3).toFixed(2)),
-        recommendation: recommendations[i]?.recommendation ?? 'hold',
-        reason: recommendations[i]?.reason ?? '',
+        recommendation: rec.recommendation,
+        reason: rec.reason,
+        soc: rec.soc,
+        chargePowerKw: rec.chargePowerKw,
+        dischargePowerKw: rec.dischargePowerKw,
+        availableEnergyKwh: rec.availableEnergyKwh,
+        actionEnergyKwh: rec.actionEnergyKwh,
+        revenue: rec.revenue,
       };
     });
 
     // Summary stats
-    const peakSolarHour = data.reduce((max, d) => d.solar > max.solar ? d : max, data[0]);
-    const peakLoadHour = data.reduce((max, d) => d.load > max.load ? d : max, data[0]);
-    const chargeCount = data.filter(d => d.recommendation === 'charge').length;
-    const dischargeCount = data.filter(d => d.recommendation === 'discharge').length;
+    const peakSolarRec = data.reduce((max, d) => d.solar > max.solar ? d : max, data[0]);
+    const peakLoadRec = data.reduce((max, d) => d.load > max.load ? d : max, data[0]);
 
     res.json({
       success: true,
       horizon: FORECAST_HORIZON,
-      modelVersion: 'LSTM-v2.0-solar',
+      modelVersion: 'LSTM-v2.0-solar-soc',
       summary: {
-        peakSolar: { hour: peakSolarHour.hour, power: peakSolarHour.solar },
-        peakLoad: { hour: peakLoadHour.hour, load: peakLoadHour.load },
-        chargeCount,
-        dischargeCount,
+        peakSolar: { hour: peakSolarRec.hour, power: peakSolarRec.solar },
+        peakLoad: { hour: peakLoadRec.hour, load: peakLoadRec.load },
+        chargeCount: data.filter(d => d.recommendation === 'charge').length,
+        dischargeCount: data.filter(d => d.recommendation === 'discharge').length,
         avgConfidence: parseFloat(((loadResult.confidence + priceResult.confidence + solarResult.confidence) / 3).toFixed(2)),
+        revenue,
       },
       data,
     });

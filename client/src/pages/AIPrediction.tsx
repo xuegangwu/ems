@@ -34,6 +34,17 @@ interface ForecastSummary {
   chargeCount: number;
   dischargeCount: number;
   avgConfidence: number;
+  revenue?: {
+    dailyRevenue: number;
+    monthlyProjected: number;
+    annualProjected: number;
+    peakShavingRevenue: number;
+    arbitrageRevenue: number;
+    carbonSavingKwh: number;
+    withoutAIDailyCost: number;
+    withAIDailyCost: number;
+    dailySaving: number;
+  };
 }
 
 interface ForecastResponse {
@@ -442,6 +453,28 @@ export default function AIPrediction() {
       ellipsis: true,
       render: (r: string) => <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{r}</span>,
     },
+    {
+      title: 'SOC',
+      dataIndex: 'soc',
+      key: 'soc',
+      width: 70,
+      render: (soc: number) => (
+        <span style={{ color: soc > 80 ? '#00D4AA' : soc > 50 ? '#FF9500' : '#FF4D4F', fontWeight: 600, fontSize: 12 }}>
+          {soc?.toFixed(0) ?? '--'}%
+        </span>
+      ),
+    },
+    {
+      title: '收益',
+      dataIndex: 'revenue',
+      key: 'revenue',
+      width: 80,
+      render: (rev: number) => (
+        <span style={{ color: rev > 0 ? '#00D4AA' : rev < 0 ? '#FF4D4F' : 'rgba(255,255,255,0.3)', fontWeight: 600, fontSize: 12 }}>
+          {rev > 0 ? `+${rev.toFixed(0)}` : rev < 0 ? `${rev.toFixed(0)}` : '—'}元
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -483,8 +516,10 @@ export default function AIPrediction() {
           { label: '平均电价', value: `¥${avgPrice.toFixed(3)}`, color: '#FF9500', icon: '💰' },
           { label: '建议充电', value: `${chargeCount}次`, color: '#00D4AA', icon: '🔋' },
           { label: '建议放电', value: `${dischargeCount}次`, color: '#FF4D4F', icon: '⚡' },
+          { label: '预估日收益', value: `${resp?.summary?.revenue?.dailySaving?.toFixed(0) ?? 0}元`, color: '#FFD700', icon: '💹' },
+          { label: '月度预估', value: `${resp?.summary?.revenue?.monthlyProjected?.toFixed(0) ?? 0}元`, color: '#00D4AA', icon: '📅' },
         ].map(stat => (
-          <Col xs={12} sm={8} md={5} key={stat.label}>
+          <Col xs={12} sm={8} md={stat.icon === '📅' ? 24 : 5} key={stat.label} lg={stat.icon === '📅' ? 24 : 5}>
             <Card
               size="small"
               style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${stat.color}22`, textAlign: 'center' }}
@@ -580,10 +615,38 @@ export default function AIPrediction() {
             ))}
           </Row>
 
+          {/* ─── Revenue summary ───────────────────────────────────────────── */}
+          {resp?.summary?.revenue && (
+            <Card
+              title="💹 AI调度收益测算"
+              style={{ background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.15)', marginBottom: 14 }}
+              bodyStyle={{ padding: '16px' }}
+            >
+              <Row gutter={[12, 12]}>
+                {[
+                  { label: '日节省电费', value: `¥${(resp.summary.revenue.dailySaving ?? 0).toFixed(0)}`, sub: '较无优化基准', color: '#FFD700' },
+                  { label: '月度预估', value: `¥${(resp.summary.revenue.monthlyProjected ?? 0).toFixed(0)}`, sub: '基于日均收益', color: '#00D4AA' },
+                  { label: '年度预估', value: `¥${(resp.summary.revenue.annualProjected ?? 0).toFixed(0)}`, sub: '年化收益', color: '#FF9500' },
+                  { label: '峰谷套利', value: `¥${(resp.summary.revenue.arbitrageRevenue ?? 0).toFixed(0)}`, sub: '谷充峰放收益', color: '#667EEA' },
+                  { label: '碳减排', value: `${(resp.summary.revenue.carbonSavingKwh ?? 0).toFixed(0)}kWh`, sub: '光伏消纳量', color: '#38A169' },
+                  { label: '基准电费', value: `¥${(resp.summary.revenue.withoutAIDailyCost ?? 0).toFixed(0)}/日`, sub: '无优化电费', color: 'rgba(255,255,255,0.4)' },
+                ].map(s => (
+                  <Col xs={12} sm={8} md={4} key={s.label}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.sub}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>{s.label}</div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            </Card>
+          )}
+
           {/* ─── Dispatch table ────────────────────────────────────────────── */}
           <Card
             title="📋 智能调度建议（未来24小时）"
-            extra={<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>基于负荷 + 电价联合预测</span>}
+            extra={<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>储能SOC感知调度 · 95%上限 · 20%下限</span>}
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(102,126,234,0.12)' }}
             bodyStyle={{ padding: 0 }}
           >
@@ -592,7 +655,7 @@ export default function AIPrediction() {
               columns={tableColumns}
               rowKey="timestamp"
               pagination={{ pageSize: 12, size: 'small', showSizeChanger: false }}
-              scroll={{ x: 800 }}
+              scroll={{ x: 1000 }}
               size="small"
               loading={loading}
               rowClassName={(_, index) => index % 2 === 0 ? 'table-row-even' : ''}
