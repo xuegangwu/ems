@@ -163,65 +163,69 @@ function EnergyFlowDiagram({ twin }: { twin: StationDigitalTwin }) {
 
 
 // ─── VPP Panel ────────────────────────────────────────────────────────────────────────────────
-function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
-  const [dispatchActive, setDispatchActive] = useState(false);
-  const [dispatchData, setDispatchData] = useState<any[]>([]);
-  const [dispatchLoading, setDispatchLoading] = useState(false);
+function VVPPStatusPanel() {
+  const [dispatchStatus, setDispatchStatus] = useState<any>(null);
   const [marketData, setMarketData] = useState<any>(null);
-  const [marketLoading, setMarketLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('vpp-status');
 
-  const loadDispatch = useCallback(async () => {
-    if (dispatchData.length > 0) return;
-    setDispatchLoading(true);
+  const loadAll = useCallback(async () => {
     try {
-      const res = await fetch('/api/predict/dispatch');
-      const json = await res.json();
-      if (json.success) setDispatchData(json.data ?? []);
-    } catch (_) {}
-    setDispatchLoading(false);
-  }, [dispatchData.length]);
-
-  const loadMarket = useCallback(async () => {
-    if (marketData) return;
-    setMarketLoading(true);
-    try {
-      const [statusRes, bidRes] = await Promise.all([
-        fetch('/api/vpp/market/status'),
-        fetch('/api/vpp/report/daily'),
+      const [ds, m, rp] = await Promise.all([
+        fetch('/api/vpp/dispatch/status').then(j => j.json()),
+        fetch('/api/vpp/market/status').then(j => j.json()),
+        fetch('/api/vpp/report/daily').then(j => j.json()),
       ]);
-      const status = await statusRes.json();
-      const report = await bidRes.json();
-      setMarketData({ status, report });
+      if (ds.success) setDispatchStatus(ds);
+      if (m.success) setMarketData({ status: m, report: rp.success ? rp : null });
     } catch (_) {}
-    setMarketLoading(false);
-  }, [marketData]);
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   const tabItems = [
     {
       key: 'vpp-status',
       label: <><span>🏭</span> VPP状态</>,
-      children: (
+      children: dispatchStatus ? (
         <>
           <Row gutter={[12, 12]}>
-            <Col xs={12} lg={6}><div style={{ background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>⚡ 总可调容量</div><div style={{ fontSize: 26, fontWeight: 700, color: '#FFB400' }}>{vpp.totalCapacity.toLocaleString()} <span style={{ fontSize: 13, fontWeight: 400 }}>kW</span></div></div></Col>
-            <Col xs={12} lg={6}><div style={{ background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>💰 本月收益</div><div style={{ fontSize: 26, fontWeight: 700, color: '#00D4AA' }}>¥{vpp.monthlyRevenue.toLocaleString()}</div></div></Col>
-            <Col xs={12} lg={6}><div style={{ background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>📊 当前电价</div><div style={{ fontSize: 26, fontWeight: 700, color: '#667EEA' }}>¥{vpp.currentPrice.toFixed(2)}<span style={{ fontSize: 13, fontWeight: 400 }}>/kWh</span></div></div></Col>
-            <Col xs={12} lg={6}><div style={{ background: 'rgba(255,77,79,0.06)', border: '1px solid rgba(255,77,79,0.15)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>📝 已签约容量</div><div style={{ fontSize: 26, fontWeight: 700, color: '#FF4D4F' }}>{vpp.signedCapacity.toLocaleString()}<span style={{ fontSize: 13, fontWeight: 400 }}> kW</span></div></div></Col>
+            <Col xs={12} lg={6}><div style={{ background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>⚡ 总可调容量</div><div style={{ fontSize: 26, fontWeight: 700, color: '#FFB400' }}>{(dispatchStatus.stations || []).reduce((s: number, st: any) => s + (st.max_power_kw || 0), 0).toLocaleString()} <span style={{ fontSize: 13, fontWeight: 400 }}>kW</span></div></div></Col>
+            <Col xs={12} lg={6}><div style={{ background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>💰 本月收益</div><div style={{ fontSize: 26, fontWeight: 700, color: '#00D4AA' }}>¥{((marketData?.report?.summary?.monthly_projected_yuan || 0) / 1000).toFixed(0)}k</div></div></Col>
+            <Col xs={12} lg={6}><div style={{ background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.2)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>📊 当前电价</div><div style={{ fontSize: 26, fontWeight: 700, color: '#667EEA' }}>¥{dispatchStatus?.current_price?.toFixed(2) || '—'}<span style={{ fontSize: 13, fontWeight: 400 }}>/kWh</span></div></div></Col>
+            <Col xs={12} lg={6}><div style={{ background: 'rgba(255,77,79,0.06)', border: '1px solid rgba(255,77,79,0.15)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>📝 已签约容量</div><div style={{ fontSize: 26, fontWeight: 700, color: '#FF4D4F' }}>{dispatchStatus?.signed_capacity_kw?.toLocaleString() || '—'}<span style={{ fontSize: 13, fontWeight: 400 }}> kW</span></div></div></Col>
           </Row>
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>📊 可调资源构成</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>📊 各站调度状态</div>
             <Row gutter={[8, 8]}>
-              <Col xs={8}><div style={{ background: 'rgba(0,212,170,0.08)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>🔋 储能</div><div style={{ fontSize: 18, fontWeight: 700, color: '#00D4AA' }}>{vpp.bessCapacity}</div><div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>kW · {((vpp.bessCapacity / vpp.totalCapacity) * 100).toFixed(0)}%</div></div></Col>
-              <Col xs={8}><div style={{ background: 'rgba(56,161,105,0.08)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>🚗 充电桩</div><div style={{ fontSize: 18, fontWeight: 700, color: '#38A169' }}>{vpp.evCapacity}</div><div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>kW · {vpp.totalCapacity > 0 ? ((vpp.evCapacity / vpp.totalCapacity) * 100).toFixed(0) : 0}%</div></div></Col>
-              <Col xs={8}><div style={{ background: 'rgba(155,89,182,0.08)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>🏭 可中断负荷</div><div style={{ fontSize: 18, fontWeight: 700, color: '#9B59B6' }}>{vpp.loadCapacity}</div><div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>kW · {vpp.totalCapacity > 0 ? ((vpp.loadCapacity / vpp.totalCapacity) * 100).toFixed(0) : 0}%</div></div></Col>
+              {(dispatchStatus?.stations || []).map((st: any) => {
+                const socColor = st.current_soc > 70 ? '#00D4AA' : st.current_soc > 40 ? '#FFB400' : '#FF4D4F';
+                const cmdColor = st.last_command === 'CHARGE' ? '#00D4AA' : st.last_command === 'DISCHARGE' ? '#FF4D4F' : '#667EEA';
+                return (
+                  <Col xs={8} key={st.station_id}>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>{st.name}</div>
+                      <div style={{ fontSize: 11, color: socColor, fontWeight: 700, marginBottom: 2 }}>SOC {st.current_soc}%</div>
+                      <div style={{ fontSize: 10, color: cmdColor }}>{st.last_command || '—'}</div>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{st.max_power_kw}kW</div>
+                    </div>
+                  </Col>
+                );
+              })}
             </Row>
           </div>
-          {vpp.marketStatus !== 'idle' && (
-            <div style={{ marginTop: 12, padding: '10px 14px', background: vpp.marketStatus === 'responding' ? 'rgba(56,161,105,0.1)' : 'rgba(255,149,0,0.1)', border: `1px solid ${vpp.marketStatus === 'responding' ? '#38A169' : '#FF9500'}30`, borderRadius: 8 }}>
-              <Space><span style={{ fontSize: 14 }}>{vpp.marketStatus === 'responding' ? '⚡' : '📊'}</span><span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{vpp.marketStatus === 'responding' ? '当前响应时段' : '申报进行中'}：{vpp.responseWindow}</span></Space>
+          {dispatchStatus?.current_signal && dispatchStatus.current_signal !== 'STANDBY' && (
+            <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(0,212,170,0.08)', border: '1px solid #00D4AA30', borderRadius: 8 }}>
+              <Space>
+                <span style={{ fontSize: 14 }}>{dispatchStatus.current_signal === 'DISCHARGE' ? '⚡' : '🔋'}</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+                  AGC：{dispatchStatus.current_signal === 'DISCHARGE' ? '放电' : '充电'} · 目标 {(dispatchStatus.target_mw * 1000).toFixed(0)} kW
+                </span>
+              </Space>
             </div>
           )}
         </>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin size="large" /></div>
       ),
     },
     {
@@ -229,9 +233,9 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
       label: <><span>📊</span> 市场</>,
       children: (
         <div style={{ padding: '8px 0' }}>
-          {marketLoading ? (
+          {!marketData ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin size="large" /></div>
-          ) : marketData ? (
+          ) : (
             <>
               <Row gutter={[10, 10]}>
                 {[
@@ -273,84 +277,25 @@ function VVPPStatusPanel({ vpp }: { vpp: NonNullable<VPPStatus> }) {
                 </div>
               )}
             </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Spin size="large" />
-              <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>加载市场数据...</div>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'ai-dispatch',
-      label: <><span>🤖</span> AI调度建议</>,
-      children: (
-        <div style={{ padding: '4px 0' }}>
-          {dispatchLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin size="large" /></div>
-          ) : (
-            <>
-              <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
-                {[
-                  { label: '充电时段', count: dispatchData.filter((d: any) => d.recommendation === 'charge').length, color: '#00D4AA', bg: 'rgba(0,212,170,0.1)', border: 'rgba(0,212,170,0.2)' },
-                  { label: '放电时段', count: dispatchData.filter((d: any) => d.recommendation === 'discharge').length, color: '#FF4D4F', bg: 'rgba(255,77,79,0.1)', border: 'rgba(255,77,79,0.2)' },
-                  { label: '待机时段', count: dispatchData.filter((d: any) => d.recommendation === 'hold').length, color: '#667EEA', bg: 'rgba(102,126,234,0.1)', border: 'rgba(102,126,234,0.2)' },
-                ].map(s => (
-                  <Col xs={8} key={s.label}>
-                    <div style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 8, padding: '10px 8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.count}次</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{s.label}</div>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-              <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-                {dispatchData.map((d: any, i: number) => {
-                  const rec = d.recommendation;
-                  const r = REC_MAP[rec] ?? REC_MAP.hold;
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: 6, marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', minWidth: 48 }}>{d.hour}</span>
-                      <Tag style={{ background: r.bg, color: r.color, border: `1px solid ${r.border}`, fontSize: 11 }}>{r.text}</Tag>
-                      <span style={{ fontSize: 12, color: '#FF9500' }}>¥{d.price?.toFixed(3)}</span>
-                      <span style={{ fontSize: 12, color: '#667EEA' }}>{d.load}kW</span>
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flex: 1 }}>{d.reason}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
           )}
         </div>
       ),
     },
   ];
 
+  const mStatus = marketData?.status?.market_status || 'idle';
   return (
     <Card
       style={{ marginTop: 16, background: 'rgba(255,200,0,0.04)', border: '1px solid rgba(255,180,0,0.2)' }}
-      title={<Space><span style={{ fontSize: 18 }}>🏭</span><span style={{ fontWeight: 600 }}>虚拟电厂 (VPP)</span><Tag color={vpp.marketStatus === 'responding' ? 'green' : vpp.marketStatus === 'bidding' ? 'orange' : 'default'}>{vpp.marketStatus === 'responding' ? '⚡ 响应中' : vpp.marketStatus === 'bidding' ? '📊 申报中' : '✓ 待机'}</Tag></Space>}
-      extra={<Tag color={vpp.isVPPEnabled ? 'green' : 'red'}>{vpp.isVPPEnabled ? 'VPP已接入' : 'VPP未接入'}</Tag>}
+      title={<Space><span style={{ fontSize: 18 }}>🏭</span><span style={{ fontWeight: 600 }}>虚拟电厂 (VPP)</span><Tag color={mStatus === 'responding' ? 'green' : mStatus === 'bidding' ? 'orange' : 'default'}>{mStatus === 'responding' ? '⚡ 响应中' : mStatus === 'bidding' ? '📊 申报中' : '✓ 待机'}</Tag></Space>}
+      extra={<Tag color={dispatchStatus?.is_vpp_enabled !== false ? 'green' : 'red'}>{dispatchStatus?.is_vpp_enabled !== false ? 'VPP已接入' : 'VPP未接入'}</Tag>}
       tabList={tabItems}
-      activeTabKey={dispatchActive ? 'ai-dispatch' : 'vpp-status'}
-      onTabChange={(key) => {
-        const isAi = key === 'ai-dispatch';
-        const isMarket = key === 'vpp-market';
-        setDispatchActive(isAi);
-        if (isAi) { setDispatchData([]); loadDispatch(); }
-        if (isMarket) { setMarketData(null); loadMarket(); }
-      }}
-      bodyStyle={{ padding: dispatchActive ? 0 : undefined }}
+      activeTabKey={activeTab}
+      onTabChange={(key) => setActiveTab(key)}
     />
   );
 }
 
-const REC_MAP: Record<string, { color: string; bg: string; border: string; text: string }> = {
-  charge: { color: '#00D4AA', bg: 'rgba(0,212,170,0.1)', border: 'rgba(0,212,170,0.25)', text: '🔋 充电' },
-  discharge: { color: '#FF4D4F', bg: 'rgba(255,77,79,0.1)', border: 'rgba(255,77,79,0.25)', text: '⚡ 放电' },
-  hold: { color: '#667EEA', bg: 'rgba(102,126,234,0.1)', border: 'rgba(102,126,234,0.25)', text: '⏸ 待机' },
-};
 
 // ─── Main ─────────────────────────────────────────────────────────────────────────────────────
 export default function DigitalTwin() {
@@ -469,7 +414,7 @@ export default function DigitalTwin() {
         </Row>
       </Card>
 
-      {twin.vpp && <VVPPStatusPanel vpp={twin.vpp} />}
+      <VVPPStatusPanel />
     </div>
   );
 }
