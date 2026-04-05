@@ -139,8 +139,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`EMS Server running on port ${PORT}`);
+  // Warmup LSTM models on startup so first request isn't delayed
+  console.log('[Warmup] Preparing AI models...');
+  try {
+    const { initModels } = await import('./controllers/predictController.js');
+    await initModels();
+    console.log('[Warmup] AI models ready');
+  } catch (e) {
+    console.warn('[Warmup] AI models skipped:', (e as Error).message);
+  }
 });
 
 export default app;

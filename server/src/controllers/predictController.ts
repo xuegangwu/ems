@@ -98,7 +98,7 @@ function createSequences(values: number[]): { X: tf.Tensor; y: tf.Tensor } {
 }
 
 // ─── Initialize models ────────────────────────────────────────────────────────
-async function initModels() {
+export async function initModels() {
   if (modelsReady) return;
   console.log('[Predict] Training LSTM models (~5 epochs, please wait)...');
 

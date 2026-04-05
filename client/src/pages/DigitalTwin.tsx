@@ -374,15 +374,15 @@ export default function DigitalTwin() {
         );
         if (!stationData) return;
         const rt = {
-          generation: stationData.pv_generation_power_kw ?? stationData.pv_power_kw ?? 0,
-          consumption: stationData.load_power_kw ?? 0,
-          storage: (stationData.bess_soc_pct ?? 78) / 100 * 4800,
-          storageSoc: stationData.bess_soc_pct ?? 78,
-          gridExport: Math.max(0, (stationData.pv_power_kw ?? 0) - (stationData.load_power_kw ?? 0)),
-          gridImport: Math.max(0, (stationData.load_power_kw ?? 0) - (stationData.pv_power_kw ?? 0)),
-          efficiency: stationData.pv_irradiance_wm2 ? Math.min(99, 85 + (Number(stationData.pv_irradiance_wm2) / 1000) * 10) : 94.2,
-          temperature: stationData.pv_temperature_c ?? 28.5,
-          evCharging: stationData.ev_charging_power_kw ?? 0,
+          generation: stationData.generation ?? 0,
+          consumption: stationData.consumption ?? 0,
+          storage: stationData.storage ?? ((stationData.storageSoc ?? 78) / 100 * 4800),
+          storageSoc: stationData.storageSoc ?? 78,
+          gridExport: stationData.gridExport ?? Math.max(0, (stationData.generation ?? 0) - (stationData.consumption ?? 0)),
+          gridImport: stationData.gridImport ?? Math.max(0, (stationData.consumption ?? 0) - (stationData.generation ?? 0)),
+          efficiency: stationData.efficiency ?? 94.2,
+          temperature: stationData.temperature ?? 28.5,
+          evCharging: stationData.evCharging ?? 0,
         };
         setTwin(prev => ({
           ...prev,

@@ -30,14 +30,14 @@ function queryCurl(flux: string): string[] {
 
 function parseInfluxCSV(lines: string[], idTag: string): Map<string, Record<string, number>> {
   const map = new Map<string, Record<string, number>>();
-  if (lines.length < 2) return map;
+  if (lines.length < 2) { console.error('[parseInfluxCSV] only', lines.length, 'lines'); return map; }
   const header = lines[0].split(',');
   // Find column indices — look up by column name rather than hardcoding
   const fieldIdx = header.indexOf('_field');
   const valueIdx = header.indexOf('_value');
   const idIdx = header.indexOf(idTag);
   if (fieldIdx < 0 || valueIdx < 0 || idIdx < 0) {
-    console.error('[InfluxDB parse] missing columns:', header);
+    console.error('[parseInfluxCSV] missing columns. fieldIdx:', fieldIdx, 'valueIdx:', valueIdx, 'idIdx:', idIdx, 'header:', header);
     return map;
   }
   for (let i = 1; i < lines.length; i++) {

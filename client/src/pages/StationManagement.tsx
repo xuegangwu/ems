@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Space, Select, Input, Modal, Form, InputNumber, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { powerStations } from '../services/mockData';
 import type { PowerStation } from '../types';
 
 const statusOptions = [
@@ -31,6 +30,8 @@ const statusMap: Record<string, { color: string; text: string }> = {
 };
 
 export default function StationManagement() {
+  const [stations, setStations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailStation, setDetailStation] = useState<PowerStation | null>(null);
@@ -38,11 +39,20 @@ export default function StationManagement() {
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
 
-  const columns: ColumnsType<PowerStation> = [
+  const columns: ColumnsType<any> = [
     { title: '电站名称', dataIndex: 'name', key: 'name' },
     { title: '类型', dataIndex: 'type', key: 'type', render: (type) => <Tag color={typeMap[type]?.color}>{typeMap[type]?.text}</Tag> },
+    { title: '实时功率', key: 'realtime', render: (_: any, r: any) => {
+      const rt = r.realtime;
+      if (!rt) return <Tag>—</Tag>;
+      return <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{Math.round(rt.generation || 0)} kW</span>;
+    }},
+    { title: 'SOC', key: 'soc', render: (_: any, r: any) => {
+      const soc = r.realtime?.storageSoc;
+      if (!soc) return <Tag>—</Tag>;
+      return <Tag color={soc > 50 ? 'green' : soc > 25 ? 'orange' : 'red'}>{soc.toFixed(0)}%</Tag>;
+    }},
     { title: '装机容量', dataIndex: 'installedCapacity', key: 'installedCapacity', render: (v) => `${v} kW` },
-    { title: '峰值功率', dataIndex: 'peakPower', key: 'peakPower', render: (v) => `${v} kW` },
     { title: '位置', dataIndex: 'location', key: 'location', ellipsis: true },
     { title: '状态', dataIndex: 'status', key: 'status', render: (status) => <Tag color={statusMap[status]?.color}>{statusMap[status]?.text}</Tag> },
     { title: '联系人', dataIndex: 'contact', key: 'contact', ellipsis: true },
@@ -59,6 +69,13 @@ export default function StationManagement() {
     },
   ];
 
+  useEffect(() => {
+    fetch('/api/stations')
+      .then(r => r.json())
+      .then(d => { if (d.success) setStations(d.data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
   const handleAddStation = () => {
     form.validateFields().then(values => {
       console.log(values);
@@ -69,7 +86,7 @@ export default function StationManagement() {
     });
   };
 
-  const filteredStations = powerStations.filter(s =>
+  const filteredStations = stations.filter(s =>
     s.name.toLowerCase().includes(searchText.toLowerCase()) ||
     s.location.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -102,8 +119,9 @@ export default function StationManagement() {
             dataSource={filteredStations}
             columns={columns}
             rowKey="id"
+            loading={loading}
             pagination={{ pageSize: 10 }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 1000 }}
           />
         </div>
       </Card>

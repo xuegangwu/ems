@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
+import http from 'http';
 
-const stations = [
+const STATIONS = [
   {
     id: 'station-001',
     name: '苏州工业园光伏电站',
@@ -42,12 +43,36 @@ const stations = [
   },
 ];
 
+function fetchJSON(url: string): Promise<any> {
+  return new Promise((resolve) => {
+    http.get(url, (r) => {
+      let d = '';
+      r.on('data', c => { d += c; });
+      r.on('end', () => {
+        try { resolve(JSON.parse(d)); } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
 export const stationController = {
-  getAll: (req: Request, res: Response) => {
-    res.json({ success: true, data: stations });
+  getAll: async (req: Request, res: Response) => {
+    // Merge static info with real-time InfluxDB data
+    const realtime = await fetchJSON('http://localhost:8080/api/realtime');
+    const rtMap: Record<string, any> = {};
+    if (realtime?.data) {
+      for (const s of realtime.data) {
+        rtMap[s.station_id] = s;
+      }
+    }
+    const data = STATIONS.map(s => ({
+      ...s,
+      realtime: rtMap[s.id] || null,
+    }));
+    res.json({ success: true, data });
   },
   getById: (req: Request, res: Response) => {
-    const station = stations.find(s => s.id === req.params.id);
+    const station = STATIONS.find((s: any) => s.id === req.params.id);
     if (!station) {
       return res.status(404).json({ success: false, message: 'Station not found' });
     }
@@ -55,23 +80,23 @@ export const stationController = {
   },
   create: (req: Request, res: Response) => {
     const newStation = { id: `station-${Date.now()}`, ...req.body };
-    stations.push(newStation);
+    STATIONS.push(newStation);
     res.json({ success: true, data: newStation });
   },
   update: (req: Request, res: Response) => {
-    const index = stations.findIndex(s => s.id === req.params.id);
+    const index = STATIONS.findIndex((s: any) => s.id === req.params.id);
     if (index === -1) {
       return res.status(404).json({ success: false, message: 'Station not found' });
     }
-    stations[index] = { ...stations[index], ...req.body };
-    res.json({ success: true, data: stations[index] });
+    STATIONS[index] = { ...STATIONS[index], ...req.body };
+    res.json({ success: true, data: STATIONS[index] });
   },
   delete: (req: Request, res: Response) => {
-    const index = stations.findIndex(s => s.id === req.params.id);
+    const index = STATIONS.findIndex((s: any) => s.id === req.params.id);
     if (index === -1) {
       return res.status(404).json({ success: false, message: 'Station not found' });
     }
-    stations.splice(index, 1);
+    STATIONS.splice(index, 1);
     res.json({ success: true });
   },
 };

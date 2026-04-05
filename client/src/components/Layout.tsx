@@ -169,14 +169,18 @@ export default function Layout() {
     <>
       {/* Topbar */}
       <div className="layout-topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '0 4px', flexShrink: 0 }}
-          onClick={() => navigate('/')}>
+        <a href="https://solaripple.com" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '0 4px', flexShrink: 0, textDecoration: 'none' }}>
           <span style={{ fontSize: 22 }}>⚡</span>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1.2 }}>EnOS</div>
             <div style={{ fontSize: 9, color: 'rgba(102,126,234,0.8)', letterSpacing: '0.3px' }}>光之涟漪</div>
           </div>
-        </div>
+        </a>
+        <a href="https://solaripple.com" target="_blank" rel="noopener noreferrer"
+          style={{ fontSize: 10, color: 'rgba(102,126,234,0.6)', background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.2)', padding: '2px 8px', borderRadius: 6, textDecoration: 'none', flexShrink: 0 }}>
+          ← 首页
+        </a>
 
         <div className="topbar-search" onClick={() => setCmdOpen(true)}>
           <span>🔍</span>
