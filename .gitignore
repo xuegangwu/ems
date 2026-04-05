@@ -10,3 +10,6 @@ dist/
 *.swo
 coverage/
 .nyc_output/
+backup/
+*.bak
+dist.tar.gz
