@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光之涟漪 Solaripple — 能源数字化平台</title>
+<meta name="description" content="光之涟漪能源科技，专注于工商业光储一体化数字孪生平台、VPP虚拟电厂交易系统、极速渲染引擎">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #050810;
+  color: #fff;
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+
+/* Nav */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 60px; height: 64px;
+  background: rgba(5,8,16,0.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.nav-logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.nav-logo span { color: #FFD700; }
+.nav-links { display: flex; gap: 32px; font-size: 13px; }
+.nav-links a { color: rgba(255,255,255,0.45); transition: color 0.2s; }
+.nav-links a:hover { color: #FFD700; }
+.hamburger {
+  display: none; flex-direction: column; gap: 5px; cursor: pointer;
+  padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.hamburger span { display: block; width: 22px; height: 2px; background: rgba(255,255,255,0.5); border-radius: 1px; transition: all 0.3s; }
+.mobile-menu {
+  display: none; position: fixed; top: 64px; left: 0; right: 0;
+  background: rgba(5,8,16,0.95); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-direction: column; padding: 16px 24px; gap: 4px;
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu a { display: block; padding: 12px 0; font-size: 14px; color: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { color: #FFD700; }
+
+/* Hero */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding: 120px 24px 80px;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,215,0,0.06) 0%, transparent 60%);
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2);
+  color: #FFD700; font-size: 11px; padding: 5px 16px; border-radius: 20px;
+  margin-bottom: 32px; letter-spacing: 1px;
+}
+h1 {
+  font-size: clamp(48px, 8vw, 80px); font-weight: 900; letter-spacing: -3px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 50%, #FF4500 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sub { font-size: 20px; color: rgba(255,255,255,0.45); max-width: 520px; line-height: 1.7; margin-bottom: 12px; font-weight: 300; }
+.tagline { font-size: 15px; color: rgba(255,255,255,0.25); margin-bottom: 48px; }
+
+/* CTA */
+.cta-group { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 64px; }
+.btn {
+  padding: 12px 32px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  transition: all 0.2s; cursor: pointer;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #050810; border: none;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,215,0,0.3); }
+.btn-outline {
+  background: transparent; color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.btn-outline:hover { border-color: rgba(255,215,0,0.4); color: #FFD700; }
+
+/* Stats */
+.stats { display: flex; gap: 48px; justify-content: center; flex-wrap: wrap; margin-bottom: 64px; }
+.stat { text-align: center; }
+.stat .num { font-size: 40px; font-weight: 900; color: #FFD700; letter-spacing: -2px; display: block; }
+.stat .label { font-size: 12px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
+.divider { width: 1px; height: 48px; background: rgba(255,215,0,0.15); align-self: center; }
+
+/* Products */
+.products { padding: 80px 60px; }
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,215,0,0.5); margin-bottom: 8px; }
+.section-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin-bottom: 48px; letter-spacing: -1px; }
+
+.product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+.product-card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 20px; padding: 32px 24px; transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.product-card:hover {
+  border-color: rgba(255,215,0,0.35); transform: translateY(-4px);
+  background: rgba(255,215,0,0.03);
+}
+.product-card .icon { font-size: 40px; margin-bottom: 20px; display: block; }
+.product-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+.product-card p { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.7; margin-bottom: 20px; }
+.product-card .tag {
+  display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 16px; letter-spacing: 0.5px;
+}
+.tag-blue { background: rgba(102,126,234,0.1); color: #667EEA; border: 1px solid rgba(102,126,234,0.25); }
+.tag-green { background: rgba(0,212,170,0.1); color: #00D4AA; border: 1px solid rgba(0,212,170,0.25); }
+.tag-gold { background: rgba(255,215,0,0.1); color: #FFD700; border: 1px solid rgba(255,215,0,0.25); }
+.tag-red { background: rgba(255,107,107,0.1); color: #FF6B6B; border: 1px solid rgba(255,107,107,0.25); }
+.product-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: rgba(255,215,0,0.5); transition: color 0.2s;
+}
+.product-link:hover { color: #FFD700; }
+.product-link span { transition: transform 0.2s; }
+.product-link:hover span { transform: translateX(3px); }
+
+/* Features */
+.features { padding: 80px 60px; background: rgba(0,0,0,0.2); }
+.feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; max-width: 1100px; margin: 0 auto 60px; align-items: center; }
+.feature-row:last-child { margin-bottom: 0; }
+.feature-row.reverse { direction: rtl; }
+.feature-row.reverse > * { direction: ltr; }
+.feature-text h3 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+.feature-text p { font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.8; margin-bottom: 20px; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.feature-list li { font-size: 13px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 10px; }
+.feature-list li::before { content: '✓'; color: #00D4AA; font-weight: 700; }
+.feature-visual {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; height: 200px; display: flex; align-items: center; justify-content: center;
+  font-size: 48px; position: relative; overflow: hidden;
+}
+.feature-visual::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255,215,0,0.05) 0%, transparent 70%);
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid rgba(255,255,255,0.06); padding: 60px 60px 32px;
+  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px;
+}
+.footer-brand .nav-logo { font-size: 20px; margin-bottom: 12px; display: block; }
+.footer-brand p { font-size: 13px; color: rgba(255,255,255,0.25); line-height: 1.7; max-width: 280px; }
+footer h4 { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+footer ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+footer ul li a { font-size: 13px; color: rgba(255,255,255,0.3); transition: color 0.2s; }
+footer ul li a:hover { color: #FFD700; }
+.footer-bottom { grid-column: 1 / -1; text-align: center; font-size: 11px; color: rgba(255,255,255,0.15); padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 24px; }
+
+/* Mobile */
+@media(max-width: 1024px) {
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .feature-row { grid-template-columns: 1fr; gap: 32px; }
+  .feature-row.reverse { direction: ltr; }
+}
+@media(max-width: 768px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  .products, .features { padding: 60px 24px; }
+  .product-grid { grid-template-columns: 1fr; }
+  .stats { gap: 24px; }
+  .divider { display: none; }
+  footer { grid-template-columns: 1fr 1fr; padding: 48px 24px 24px; }
+  .footer-brand { grid-column: 1 / -1; }
+  h1 { letter-spacing: -1px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://solaripple.com" class="nav-logo">⚡ <span>Solaripple</span></a>
+  <div class="nav-links">
+    <a href="#products">产品</a>
+    <a href="#features">核心技术</a>
+    <a href="https://enos.solaripple.com" target="_blank">EnOS 平台</a>
+    <a href="https://master.solaripple.com" target="_blank">Master</a>
+    <a href="https://pretext.solaripple.com" target="_blank">Pretext</a>
+  </div>
+  <div class="hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu">
+  <a href="#products" onclick="this.parentElement.classList.remove('open')">产品</a>
+  <a href="#features" onclick="this.parentElement.classList.remove('open')">核心技术</a>
+  <a href="https://enos.solaripple.com" target="_blank">EnOS 平台</a>
+  <a href="https://master.solaripple.com" target="_blank">Master VPP</a>
+  <a href="https://pretext.solaripple.com" target="_blank">Pretext</a>
+  <a href="https://monitor.solaripple.com" target="_blank">Monitor</a>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">⚡ 能源数字化 · AI驱动 · 光之涟漪</div>
+  <h1>Solaripple</h1>
+  <p class="sub">构建更清洁的能源未来 — 工商业光储数字孪生 · 虚拟电厂交易 · 极速渲染引擎</p>
+  <p class="tagline">让每一度绿电可视化，让每一次调度智能化</p>
+
+  <div class="cta-group">
+    <a href="https://enos.solaripple.com" target="_blank" class="btn btn-primary">体验 EnOS 平台 →</a>
+    <a href="https://master.solaripple.com" target="_blank" class="btn btn-outline">VPP 交易平台</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="num">3</span><span class="label">商业电站接入</span></div>
+    <div class="divider"></div>
+    <div class="stat"><span class="num">4+</span><span class="label">数字孪生场景</span></div>
+    <div class="divider"></div>
+    <div class="stat"><span class="num">96.2%</span><span class="label">调度准确率</span></div>
+    <div class="divider"></div>
+    <div class="stat"><span class="num">~3000×</span><span class="label">渲染加速比</span></div>
+  </div>
+</div>
+
+<!-- Products -->
+<div class="products" id="products">
+  <div class="section-label">产品矩阵</div>
+  <div class="section-title">四大核心产品，全栈能源数字化</div>
+
+  <div class="product-grid">
+    <div class="product-card">
+      <span class="icon">⚡</span>
+      <span class="tag tag-blue">数字孪生</span>
+      <h3>EnOS 数字孪生平台</h3>
+      <p>3D 可视化 + 实时能量流 + LSTM 预测，群体智能决策的数字基底。光伏/储能/充电桩全覆盖。</p>
+      <a href="https://enos.solaripple.com" target="_blank" class="product-link">立即体验 <span>→</span></a>
+    </div>
+
+    <div class="product-card">
+      <span class="icon">🎛️</span>
+      <span class="tag tag-green">VPP 交易</span>
+      <h3>Master VPP 交易平台</h3>
+      <p>IEC 60870-5-104 协议模拟，AGC 自动调度，秒级响应电网频率偏差，日/月/年收益全链路分析。</p>
+      <a href="https://master.solaripple.com" target="_blank" class="product-link">进入平台 <span>→</span></a>
+    </div>
+
+    <div class="product-card">
+      <span class="icon">📊</span>
+      <span class="tag tag-gold">数据监控</span>
+      <h3>Monitor 能源情报</h3>
+      <p>实时能源资讯聚合，电力现货价格、大宗商品、碳市场动态一屏掌握。</p>
+      <a href="https://monitor.solaripple.com" target="_blank" class="product-link">查看情报 <span>→</span></a>
+    </div>
+
+    <div class="product-card">
+      <span class="icon">⚡</span>
+      <span class="tag tag-red">渲染引擎</span>
+      <h3>Pretext 极速渲染</h3>
+      <p>零 DOM 回流文本测量技术，SVG 标签宽度预计算，比传统方案快 300-600 倍。</p>
+      <a href="https://pretext.solaripple.com" target="_blank" class="product-link">开源项目 <span>→</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<div class="features" id="features">
+  <div class="section-label">核心技术</div>
+  <div class="section-title">为什么选择光之涟漪？</div>
+
+  <div class="feature-row">
+    <div class="feature-text">
+      <h3>群体智能数字孪生</h3>
+      <p>EnOS 平台将物理电站映射为实时数字孪生体。LSTM 神经网络预测 48 小时光伏出力，结合储能 SOC 动态调度策略，实现峰谷套利收益最大化。</p>
+      <ul class="feature-list">
+        <li>3D 可视化 + 实时 SVG 能量流</li>
+        <li>LSTM 预测：光伏/负荷 48h 超前规划</li>
+        <li>储能 AI 调度：SOC 最优充放策略</li>
+        <li>InfluxDB 时序数据，5 分钟分辨率</li>
+      </ul>
+    </div>
+    <div class="feature-visual">⚡ 3D</div>
+  </div>
+
+  <div class="feature-row reverse">
+    <div class="feature-text">
+      <h3>虚拟电厂（VPP）IEC 104 交易</h3>
+      <p>Master 平台模拟 IEC 60870-5-104 协议，实时接收电网 AGC 调度指令。储能作为灵活资源参与调频辅助服务市场，秒级响应频率偏差。</p>
+      <ul class="feature-list">
+        <li>IEC 104 M_ME_TF_1 / C_SE_TF_1 协议</li>
+        <li>AGC 自动调度信号，5 秒刷新</li>
+        <li>日/月/年收益全链路报告</li>
+        <li>支持多储能资源聚合</li>
+      </ul>
+    </div>
+    <div class="feature-visual">🎛️ VPP</div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-text">
+      <h3>Pretext — 极速渲染引擎</h3>
+      <p>自研 Pretext 文本渲染引擎，通过一次性 Canvas 预测量 + 纯算术分行，替代传统 DOM offsetWidth 测量。SVG 标签宽度预计算，零 DOM 访问，零回流抖动。</p>
+      <ul class="feature-list">
+        <li>Gzip 压缩后仅 1.2KB，零依赖</li>
+        <li>prepare() + layout() 两阶段 API</li>
+        <li>SVG / ECharts / Recharts 通用</li>
+        <li>GitHub 开源：xuegangwu/pretext</li>
+      </ul>
+    </div>
+    <div class="feature-visual">⚡ ≈</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">
+    <a href="https://solaripple.com" class="nav-logo">⚡ <span>Solaripple</span></a>
+    <p>光之涟漪能源科技（Solaripple）专注于工商业光储数字化解决方案，AI 驱动能源调度，数字孪生赋能新型电力系统。</p>
+  </div>
+  <div>
+    <h4>产品</h4>
+    <ul>
+      <li><a href="https://enos.solaripple.com" target="_blank">EnOS 数字孪生</a></li>
+      <li><a href="https://master.solaripple.com" target="_blank">Master VPP</a></li>
+      <li><a href="https://monitor.solaripple.com" target="_blank">Monitor 情报</a></li>
+      <li><a href="https://pretext.solaripple.com" target="_blank">Pretext 引擎</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>技术</h4>
+    <ul>
+      <li><a href="https://pretext.solaripple.com/docs.html" target="_blank">Pretext 文档</a></li>
+      <li><a href="https://github.com/xuegangwu/pretext" target="_blank">GitHub 开源</a></li>
+      <li><a href="https://github.com/xuegangwu/ems" target="_blank">EMS 开源</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>联系</h4>
+    <ul>
+      <li><a href="mailto:admin@solaripple.com">admin@solaripple.com</a></li>
+      <li><a href="#">关于我们</a></li>
+      <li><a href="#">加入团队</a></li>
+    </ul>
+  </div>
+  <div class="footer-bottom">
+    © 2026 光之涟漪 Solaripple · 专注于能源数字化 · 构建更清洁的能源未来
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>
