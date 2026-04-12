@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
 interface NavItem {
@@ -134,8 +134,23 @@ function CommandPalette({ open, onClose, onNavigate }: CommandPaletteProps) {
 
 export default function Layout() {
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [lightMode, setLightMode] = useState(() => {
+    return localStorage.getItem('enos_theme') === 'light';
+  });
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Apply light mode class to html element
+  useEffect(() => {
+    if (lightMode) {
+      document.documentElement.classList.add('light');
+      document.documentElement.style.colorScheme = 'light';
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
+    }
+    localStorage.setItem('enos_theme', lightMode ? 'light' : 'dark');
+  }, [lightMode]);
 
   const isActive = (key: string) => {
     const route = NAV_TO_ROUTE[key];
@@ -173,12 +188,12 @@ export default function Layout() {
           style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '0 4px', flexShrink: 0, textDecoration: 'none' }}>
           <span style={{ fontSize: 22 }}>⚡</span>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1.2 }}>EnOS</div>
-            <div style={{ fontSize: 9, color: 'rgba(102,126,234,0.8)', letterSpacing: '0.3px' }}>光之涟漪</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: lightMode ? '#1a1a1a' : 'white', lineHeight: 1.2 }}>EnOS</div>
+            <div style={{ fontSize: 9, color: lightMode ? 'rgba(0,113,227,0.8)' : 'rgba(0,113,227,0.8)', letterSpacing: '0.3px' }}>光之涟漪</div>
           </div>
         </a>
         <a href="https://solaripple.com" target="_blank" rel="noopener noreferrer"
-          style={{ fontSize: 10, color: 'rgba(102,126,234,0.6)', background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.2)', padding: '2px 8px', borderRadius: 6, textDecoration: 'none', flexShrink: 0 }}>
+          style={{ fontSize: 10, color: lightMode ? 'rgba(0,113,227,0.7)' : 'rgba(0,113,227,0.7)', background: lightMode ? 'rgba(0,113,227,0.08)' : 'rgba(0,113,227,0.08)', border: '1px solid rgba(0,113,227,0.2)', padding: '2px 8px', borderRadius: 6, textDecoration: 'none', flexShrink: 0 }}>
           ← 首页
         </a>
 
@@ -189,10 +204,23 @@ export default function Layout() {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => setLightMode(!lightMode)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 16,
+              background: lightMode ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+              border: lightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.15)',
+              color: lightMode ? '#1a1a1a' : 'white',
+            }}
+            title={lightMode ? '切换深色模式' : '切换浅色模式'}
+          >
+            {lightMode ? '🌙' : '☀️'}
+          </button>
           <div className="status-dot online" title="系统正常" />
           <div style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667EEA, #764BA2)',
+            background: 'linear-gradient(135deg, #0071e3, #00c7be)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer',
           }}>
