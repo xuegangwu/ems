@@ -104,7 +104,7 @@ h1,h2,h3,h4,h5,h6 { color: var(--text-primary); font-weight: 600; line-height: 1
   right: 0;
   height: 52px;
   z-index: 200;
-  background: rgba(7, 11, 20, 0.85);
+  background: var(--bg-surface);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -486,4 +486,18 @@ h1,h2,h3,h4,h5,h6 { color: var(--text-primary); font-weight: 600; line-height: 1
 :root.light .topbar {
   background: var(--bg-surface);
   border-bottom-color: var(--border);
+}
+
+/* ── Topbar Light Mode ──────────────────────────────────────── */
+:root.light .topbar-search {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-tertiary);
+}
+:root.light .topbar-search:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: var(--border-hover);
+}
+:root.light .topbar-search .kbb {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-tertiary);
 }
