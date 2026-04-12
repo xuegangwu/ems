@@ -467,3 +467,23 @@ h1,h2,h3,h4,h5,h6 { color: var(--text-primary); font-weight: 600; line-height: 1
 .status-dot.online { background: var(--profit); box-shadow: 0 0 6px var(--profit); }
 .status-dot.warn { background: #FBBF24; box-shadow: 0 0 6px #FBBF24; }
 .status-dot.error { background: var(--grid); box-shadow: 0 0 6px var(--grid); }
+
+/* ── Light Mode Overrides ─────────────────────────────────────── */
+:root.light .sidebar-nav-item {
+  color: var(--text-secondary);
+}
+:root.light .sidebar-nav-item:hover {
+  background: rgba(0, 113, 227, 0.06);
+  color: var(--text-primary);
+}
+:root.light .sidebar-logo {
+  background: var(--bg-surface);
+  border-bottom-color: var(--border);
+}
+:root.light .content-area {
+  background: var(--bg-base);
+}
+:root.light .topbar {
+  background: var(--bg-surface);
+  border-bottom-color: var(--border);
+}
