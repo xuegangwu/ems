@@ -161,7 +161,8 @@ h1,h2,h3,h4,h5,h6 { color: var(--text-primary); font-weight: 600; line-height: 1
 
 .sidebar-nav-item.active {
   background: var(--accent-dim);
-  color: white;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .sidebar-nav-item.active::before {
